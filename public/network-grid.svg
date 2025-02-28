@@ -1,0 +1,61 @@
+<svg width="1440" height="900" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g opacity="0.2">
+    <!-- Horizontal lines -->
+    <line x1="0" y1="100" x2="1440" y2="100" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="0" y1="200" x2="1440" y2="200" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="0" y1="300" x2="1440" y2="300" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="0" y1="400" x2="1440" y2="400" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="0" y1="500" x2="1440" y2="500" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="0" y1="600" x2="1440" y2="600" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="0" y1="700" x2="1440" y2="700" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="0" y1="800" x2="1440" y2="800" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    
+    <!-- Vertical lines -->
+    <line x1="100" y1="0" x2="100" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="200" y1="0" x2="200" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="300" y1="0" x2="300" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="400" y1="0" x2="400" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="500" y1="0" x2="500" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="700" y1="0" x2="700" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="800" y1="0" x2="800" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="900" y1="0" x2="900" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="1000" y1="0" x2="1000" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="1100" y1="0" x2="1100" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="1200" y1="0" x2="1200" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="1300" y1="0" x2="1300" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <line x1="1400" y1="0" x2="1400" y2="900" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    
+    <!-- Connection lines -->
+    <line x1="200" y1="300" x2="500" y2="600" stroke="rgba(0,163,255,0.2)" stroke-width="1.5"/>
+    <line x1="500" y1="600" x2="800" y2="200" stroke="rgba(0,163,255,0.2)" stroke-width="1.5"/>
+    <line x1="800" y1="200" x2="1100" y2="400" stroke="rgba(0,163,255,0.2)" stroke-width="1.5"/>
+    <line x1="1100" y1="400" x2="900" y2="700" stroke="rgba(0,163,255,0.2)" stroke-width="1.5"/>
+    <line x1="900" y1="700" x2="600" y2="800" stroke="rgba(0,163,255,0.2)" stroke-width="1.5"/>
+    <line x1="600" y1="800" x2="300" y2="500" stroke="rgba(0,163,255,0.2)" stroke-width="1.5"/>
+    <line x1="300" y1="500" x2="200" y2="300" stroke="rgba(0,163,255,0.2)" stroke-width="1.5"/>
+    
+    <!-- Nodes -->
+    <circle cx="200" cy="300" r="4" fill="rgba(0,163,255,0.6)"/>
+    <circle cx="500" cy="600" r="4" fill="rgba(0,163,255,0.6)"/>
+    <circle cx="800" cy="200" r="4" fill="rgba(0,163,255,0.6)"/>
+    <circle cx="1100" cy="400" r="4" fill="rgba(0,163,255,0.6)"/>
+    <circle cx="900" cy="700" r="4" fill="rgba(0,163,255,0.6)"/>
+    <circle cx="600" cy="800" r="4" fill="rgba(0,163,255,0.6)"/>
+    <circle cx="300" cy="500" r="4" fill="rgba(0,163,255,0.6)"/>
+    
+    <!-- Pulse animations -->
+    <circle cx="200" cy="300" r="15" fill="none" stroke="rgba(0,163,255,0.3)" stroke-width="2">
+      <animate attributeName="r" from="5" to="20" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" from="0.6" to="0" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="800" cy="200" r="15" fill="none" stroke="rgba(0,163,255,0.3)" stroke-width="2">
+      <animate attributeName="r" from="5" to="20" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" from="0.6" to="0" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="600" cy="800" r="15" fill="none" stroke="rgba(0,163,255,0.3)" stroke-width="2">
+      <animate attributeName="r" from="5" to="20" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" from="0.6" to="0" dur="5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg> 
