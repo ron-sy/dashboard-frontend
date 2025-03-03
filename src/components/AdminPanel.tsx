@@ -42,8 +42,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckIcon from '@mui/icons-material/Check';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ErrorIcon from '@mui/icons-material/Error';
+import EmailIcon from '@mui/icons-material/Email';
 import { useAuth } from '../context/AuthContext';
 import InvitationLinkGenerator from './InvitationLinkGenerator';
+import EmailNotificationDialog from './EmailNotificationDialog';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -122,6 +124,17 @@ const AdminPanel: React.FC = () => {
   const [newCompanyUsers, setNewCompanyUsers] = useState<string[]>([]);
 
   const { getToken, isAdmin } = useAuth();
+
+  // New state for email notification dialog
+  const [showEmailDialog, setShowEmailDialog] = useState<boolean>(false);
+  const [emailDialogLoading, setEmailDialogLoading] = useState<boolean>(false);
+  const [emailDialogError, setEmailDialogError] = useState<string>('');
+  const [currentStepUpdate, setCurrentStepUpdate] = useState<{
+    companyId: string;
+    stepId: string;
+    stepName: string;
+    newStatus: 'todo' | 'in_progress' | 'done';
+  } | null>(null);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -420,6 +433,26 @@ const AdminPanel: React.FC = () => {
 
   // Update onboarding step status
   const handleUpdateStepStatus = async (companyId: string, stepId: string, newStatus: 'todo' | 'in_progress' | 'done') => {
+    // Store the current step update for the email dialog
+    const company = companiesWithSteps.find(c => c.id === companyId);
+    const step = company?.onboarding_steps?.find(s => s.id === stepId);
+    
+    if (company && step) {
+      setCurrentStepUpdate({
+        companyId,
+        stepId,
+        stepName: step.name,
+        newStatus
+      });
+      setShowEmailDialog(true);
+    } else {
+      // If we can't find the step or company, just update without email
+      await updateStepWithoutEmail(companyId, stepId, newStatus);
+    }
+  };
+  
+  // Update step without sending email
+  const updateStepWithoutEmail = async (companyId: string, stepId: string, newStatus: 'todo' | 'in_progress' | 'done') => {
     try {
       setUpdatingStep(`${companyId}-${stepId}`);
       setError('');
@@ -471,6 +504,138 @@ const AdminPanel: React.FC = () => {
     } finally {
       setUpdatingStep(null);
     }
+  };
+  
+  // Update step with email notification
+  const updateStepWithEmail = async (templateName: string, recipients: string[]) => {
+    if (!currentStepUpdate) return;
+    
+    const { companyId, stepId, newStatus } = currentStepUpdate;
+    
+    try {
+      setEmailDialogLoading(true);
+      setEmailDialogError('');
+      setUpdatingStep(`${companyId}-${stepId}`);
+      
+      const token = await getToken();
+      
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      
+      console.log(`Updating step ${stepId} for company ${companyId} to status: ${newStatus} with email notification`);
+      console.log('Email template:', templateName);
+      console.log('Recipients:', recipients);
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/companies/${companyId}/onboarding/${stepId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          send_email: true,
+          template_name: templateName,
+          recipient_emails: recipients
+        })
+      });
+      
+      // Get the response body regardless of status
+      const responseData = await response.json().catch(err => {
+        console.error('Error parsing response:', err);
+        return { error: 'Failed to parse server response' };
+      });
+      
+      console.log('API response:', responseData);
+      
+      if (!response.ok) {
+        console.error('Error updating step status with email:', responseData);
+        throw new Error(responseData.error || `Failed to update step status: ${response.status}`);
+      }
+      
+      // Check if there was an email error even though the step was updated
+      if (responseData.email_error) {
+        console.error('Email error:', responseData.email_error);
+        
+        // If there are rejected emails, show more detailed information
+        if (responseData.rejected_emails && responseData.rejected_emails.length > 0) {
+          const domainMismatchEmails = responseData.rejected_emails
+            .filter((email: { reason: string; email: string }) => email.reason === 'recipient-domain-mismatch')
+            .map((email: { reason: string; email: string }) => email.email);
+          
+          if (domainMismatchEmails.length > 0) {
+            throw new Error(
+              `Email sending failed: The following email domains are not verified in Mandrill: ${domainMismatchEmails.join(', ')}. ` +
+              `Please verify these domains in Mandrill or use email addresses with verified domains.`
+            );
+          }
+        }
+        
+        throw new Error(`Step updated but email failed: ${responseData.email_error}`);
+      }
+      
+      // Check if there was a warning about some emails being rejected
+      if (responseData.email_warning) {
+        console.warn('Email warning:', responseData.email_warning);
+      }
+      
+      // Update the companiesWithSteps state
+      setCompaniesWithSteps(prevCompanies => 
+        prevCompanies.map(company => {
+          if (company.id === companyId && company.onboarding_steps) {
+            return {
+              ...company,
+              onboarding_steps: company.onboarding_steps.map(step => 
+                step.id === stepId ? { ...step, status: newStatus, updated_at: new Date().toISOString() } : step
+              )
+            };
+          }
+          return company;
+        })
+      );
+      
+      // Show success message with email details if available
+      if (responseData.email_sent) {
+        if (responseData.email_warning) {
+          setNotification(`Onboarding step updated. Warning: ${responseData.email_warning}`);
+        } else {
+          setNotification(`Onboarding step updated and email notification sent to ${responseData.recipients_count} recipients`);
+        }
+      } else {
+        setNotification('Onboarding step updated successfully');
+      }
+      
+      setShowEmailDialog(false);
+    } catch (err: any) {
+      console.error('Error updating step status with email:', err);
+      setEmailDialogError(err.message || 'An error occurred sending the email notification');
+      // Keep the dialog open so the user can see the error
+    } finally {
+      setEmailDialogLoading(false);
+      setUpdatingStep(null);
+    }
+  };
+  
+  // Handle email dialog close
+  const handleEmailDialogClose = () => {
+    if (emailDialogLoading) return; // Prevent closing while loading
+    
+    setShowEmailDialog(false);
+    setEmailDialogError('');
+    
+    // If dialog is closed without sending email, update the step without email
+    if (currentStepUpdate) {
+      const { companyId, stepId, newStatus } = currentStepUpdate;
+      updateStepWithoutEmail(companyId, stepId, newStatus);
+    }
+    
+    setCurrentStepUpdate(null);
+  };
+  
+  // Handle email send
+  const handleEmailSend = (templateName: string, recipients: string[]) => {
+    updateStepWithEmail(templateName, recipients);
   };
 
   // Get status icon based on step status
@@ -923,6 +1088,19 @@ const AdminPanel: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* Email Notification Dialog */}
+      {currentStepUpdate && (
+        <EmailNotificationDialog
+          open={showEmailDialog}
+          onClose={handleEmailDialogClose}
+          onSend={handleEmailSend}
+          companyId={currentStepUpdate.companyId}
+          stepName={currentStepUpdate.stepName}
+          loading={emailDialogLoading}
+          error={emailDialogError}
+        />
+      )}
     </Box>
   );
 };
