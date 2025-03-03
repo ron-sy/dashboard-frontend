@@ -19,11 +19,11 @@ import {
   alpha,
   useTheme
 } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useAuth } from '../context/AuthContext';
 import OnboardingProgress from './OnboardingProgress';
 import { useNavigate } from 'react-router-dom';
+import UserProfile from './UserProfile';
 
 // Define the structure of a company
 interface Company {
@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  const { currentUser, getToken, logout, isAdmin } = useAuth();
+  const { currentUser, getToken, isAdmin } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
   
@@ -79,15 +79,6 @@ const Dashboard: React.FC = () => {
     
     fetchCompanies();
   }, [getToken, selectedCompany]);
-  
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (err: any) {
-      setError(err.message || 'Failed to log out');
-    }
-  };
   
   const navigateToAdmin = () => {
     navigate('/admin');
@@ -157,19 +148,6 @@ const Dashboard: React.FC = () => {
               <AdminPanelSettingsIcon />
             </IconButton>
           )}
-          <IconButton 
-            color="inherit" 
-            onClick={handleLogout}
-            title="Logout"
-            sx={{ 
-              background: alpha(theme.palette.primary.main, 0.1),
-              '&:hover': {
-                background: alpha(theme.palette.primary.main, 0.2),
-              }
-            }}
-          >
-            <LogoutIcon />
-          </IconButton>
         </Toolbar>
       </AppBar>
       
@@ -186,11 +164,16 @@ const Dashboard: React.FC = () => {
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {/* Company List Sidebar */}
+            {/* Sidebar */}
             <Grid item xs={12} md={3}>
+              {/* User Profile */}
+              <UserProfile />
+              
+              {/* Company List */}
               <Paper 
                 sx={{ 
                   p: 3, 
+                  mt: 3,
                   background: alpha('#111111', 0.7),
                   backdropFilter: 'blur(10px)',
                   border: '1px solid rgba(255, 255, 255, 0.05)'
@@ -251,28 +234,29 @@ const Dashboard: React.FC = () => {
                       border: '1px solid rgba(255, 255, 255, 0.05)'
                     }}
                   >
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                      {companies.find(c => c.id === selectedCompany)?.name}
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                      {companies.find(c => c.id === selectedCompany)?.name || 'Company Dashboard'}
                     </Typography>
-                    <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1, opacity: 0.7 }}>
-                      Onboarding Status
-                    </Typography>
+                    <Divider sx={{ mb: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                    
+                    {selectedCompany && <OnboardingProgress companyId={selectedCompany} />}
                   </Paper>
-                  
-                  <OnboardingProgress companyId={selectedCompany} />
                 </>
               ) : (
                 <Paper 
                   sx={{ 
-                    p: 4, 
+                    p: 3, 
                     textAlign: 'center',
                     background: alpha('#111111', 0.7),
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.05)'
                   }}
                 >
-                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                    Select a company to view its onboarding status
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    No company selected
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Please select a company from the list to view its dashboard
                   </Typography>
                 </Paper>
               )}

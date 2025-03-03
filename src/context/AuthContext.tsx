@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, onAuthStateChanged, UserInfo } from 'firebase/auth';
-import { auth, loginWithEmail, registerWithEmail, logoutUser, AUTH_MODE } from '../firebase/firebase';
+import { 
+  auth, 
+  loginWithEmail, 
+  registerWithEmail, 
+  logoutUser, 
+  AUTH_MODE, 
+  sendVerificationEmail,
+  resendVerificationEmail
+} from '../firebase/firebase';
 
 // Define the shape of our auth context
 interface AuthContextType {
@@ -11,6 +19,7 @@ interface AuthContextType {
   logout: () => Promise<boolean>;
   getToken: () => Promise<string | null>;
   isAdmin: boolean;
+  sendEmailVerification: () => Promise<boolean>;
 }
 
 // Create the context with a default value
@@ -21,7 +30,8 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => { throw new Error('AuthContext not initialized'); },
   logout: async () => { throw new Error('AuthContext not initialized'); },
   getToken: async () => { throw new Error('AuthContext not initialized'); },
-  isAdmin: false
+  isAdmin: false,
+  sendEmailVerification: async () => { throw new Error('AuthContext not initialized'); }
 });
 
 // Custom hook to use the auth context
@@ -46,7 +56,7 @@ const DEV_MODE = false;
 const USING_MOCK_AUTH = false;
 
 // List of admin emails
-const ADMIN_EMAILS = ['admin@example.com', 'ronadin2002@gmail.com'];
+const ADMIN_EMAILS = ['admin@example.com', 'ronadin2002@gmail.com', 'ronadin1@gmail.com'];
 
 // Check if a user is an admin based on email
 const checkIsAdmin = (email: string | null): boolean => {
@@ -132,6 +142,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return currentUser.getIdToken();
   };
 
+  const sendEmailVerification = async () => {
+    if (!currentUser) {
+      throw new Error('No user is currently signed in');
+    }
+    return resendVerificationEmail(currentUser);
+  };
+
   const value: AuthContextType = {
     currentUser,
     loading,
@@ -139,7 +156,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     getToken,
-    isAdmin
+    isAdmin,
+    sendEmailVerification
   };
 
   return (

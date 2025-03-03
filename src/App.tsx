@@ -4,7 +4,11 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
+import EmailVerificationPage from './pages/EmailVerificationPage';
+import RegisterWithInvitationPage from './pages/RegisterWithInvitationPage';
 import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import VerifiedRoute from './components/VerifiedRoute';
 
 // Create a custom theme based on the synthetic teams branding
 const theme = createTheme({
@@ -90,10 +94,24 @@ const App: React.FC = () => {
       <AuthProvider>
         <Router>
           <Routes>
+            {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/register" element={<RegisterWithInvitationPage />} />
+            
+            {/* Email verification route - requires authentication but not email verification */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/verify-email" element={<EmailVerificationPage />} />
+            </Route>
+            
+            {/* Protected routes - require both authentication and email verification */}
+            <Route element={<VerifiedRoute />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+            </Route>
+            
+            {/* Default redirect */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Router>
       </AuthProvider>

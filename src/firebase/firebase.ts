@@ -1,5 +1,13 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  sendEmailVerification,
+  applyActionCode,
+  User
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration - using direct values for simplicity
@@ -46,9 +54,41 @@ export const registerWithEmail = async (email: string, password: string) => {
   try {
     // Always use real Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Send email verification
+    await sendVerificationEmail(userCredential.user);
+    
     return userCredential.user;
   } catch (error) {
     console.error("Register error:", error);
+    throw error;
+  }
+};
+
+export const sendVerificationEmail = async (user: User) => {
+  try {
+    await sendEmailVerification(user);
+    console.log("Verification email sent to:", user.email);
+    return true;
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    throw error;
+  }
+};
+
+export const resendVerificationEmail = async (user: User) => {
+  if (!user) {
+    throw new Error("No user is currently signed in");
+  }
+  return sendVerificationEmail(user);
+};
+
+export const verifyEmail = async (actionCode: string) => {
+  try {
+    await applyActionCode(auth, actionCode);
+    return true;
+  } catch (error) {
+    console.error("Error verifying email:", error);
     throw error;
   }
 };

@@ -5,22 +5,11 @@ import AdminPanel from '../components/AdminPanel';
 import { useAuth } from '../context/AuthContext';
 
 const AdminPage: React.FC = () => {
-  const { currentUser, loading, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Paper sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="h5">Loading...</Typography>
-        </Paper>
-      </Container>
-    );
-  }
-  
-  // Redirect to login if not authenticated
-  if (!currentUser) {
-    return <Navigate to="/login" />;
+  // Redirect to dashboard if not an admin
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" />;
   }
   
   // Render the admin panel

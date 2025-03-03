@@ -43,6 +43,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ErrorIcon from '@mui/icons-material/Error';
 import { useAuth } from '../context/AuthContext';
+import InvitationLinkGenerator from './InvitationLinkGenerator';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -517,6 +518,7 @@ const AdminPanel: React.FC = () => {
             <Tab label="Users" id="tab-0" />
             <Tab label="Companies" id="tab-1" />
             <Tab label="Onboarding Steps" id="tab-2" />
+            <Tab label="Invitations" id="tab-3" />
           </Tabs>
         </Box>
         
@@ -714,6 +716,24 @@ const AdminPanel: React.FC = () => {
                 ))
               )}
             </Box>
+          )}
+        </TabPanel>
+        
+        {/* Invitations Tab */}
+        <TabPanel value={tabValue} index={3}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h5">Company Invitations</Typography>
+            <Typography variant="subtitle1" color="text.secondary">
+              Generate invitation links for new users to join specific companies
+            </Typography>
+          </Box>
+          
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <InvitationLinkGenerator companies={companies} />
           )}
         </TabPanel>
       </Paper>
