@@ -21,9 +21,10 @@ import {
 } from '@mui/material';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useAuth } from '../context/AuthContext';
-import OnboardingProgress from './OnboardingProgress';
+import OnboardingProgress, { OnboardingStep } from './OnboardingProgress';
+import DetailedOnboarding from './DetailedOnboarding';
 import { useNavigate } from 'react-router-dom';
-import UserProfile from './UserProfile';
+import SideMenu from './SideMenu';
 
 // Define the structure of a company
 interface Company {
@@ -37,6 +38,9 @@ const Dashboard: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [onboardingProgress, setOnboardingProgress] = useState(0);
+  const [selectedPhaseName, setSelectedPhaseName] = useState<string | null>(null);
+  const [selectedPhaseSteps, setSelectedPhaseSteps] = useState<OnboardingStep[]>([]);
   
   const { currentUser, getToken, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -80,12 +84,53 @@ const Dashboard: React.FC = () => {
     fetchCompanies();
   }, [getToken, selectedCompany]);
   
+  // Add new useEffect for fetching onboarding progress
+  useEffect(() => {
+    const fetchOnboardingProgress = async () => {
+      if (!selectedCompany) return;
+      
+      try {
+        const token = await getToken();
+        if (!token) return;
+
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/companies/${selectedCompany}/onboarding-progress`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setOnboardingProgress(data.progress);
+        }
+      } catch (err) {
+        console.error('Failed to fetch onboarding progress:', err);
+      }
+    };
+
+    fetchOnboardingProgress();
+  }, [selectedCompany, getToken]);
+  
   const navigateToAdmin = () => {
     navigate('/admin');
   };
   
   const selectCompany = (companyId: string) => {
     setSelectedCompany(companyId);
+  };
+  
+  const handlePhaseSelect = (phaseName: string, phaseSteps: OnboardingStep[]) => {
+    console.log('Dashboard handling phase select:', phaseName);
+    console.log('Dashboard received new steps:', phaseSteps);
+    
+    // Clear previous steps and set the new ones
+    setSelectedPhaseName(phaseName);
+    setSelectedPhaseSteps([]); // First clear the steps completely
+    
+    // Use setTimeout to ensure the state update has been processed
+    setTimeout(() => {
+      setSelectedPhaseSteps([...phaseSteps]); // Then set the new steps
+    }, 0);
   };
   
   return (
@@ -108,7 +153,14 @@ const Dashboard: React.FC = () => {
         zIndex: 0
       }
     }}>
-      <AppBar position="static" sx={{ background: 'transparent', backdropFilter: 'blur(10px)' }}>
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          background: 'transparent', 
+          backdropFilter: 'blur(10px)',
+          zIndex: (theme) => theme.zIndex.drawer + 1 
+        }}
+      >
         <Toolbar>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <Typography 
@@ -122,11 +174,10 @@ const Dashboard: React.FC = () => {
             >
               <Box 
                 component="img" 
-                src="/synthetic-teams-logo.svg" 
-                alt="Synthetic Teams" 
-                sx={{ height: 32, mr: 2 }}
+                src="/logo.svg" 
+                alt="Logo" 
+                sx={{ height: 48 }}
               />
-              synthetic<Box component="span" sx={{ color: theme.palette.primary.main }}>teams</Box>
             </Typography>
           </Box>
           <Typography variant="body2" sx={{ mr: 2, opacity: 0.7 }}>
@@ -150,120 +201,117 @@ const Dashboard: React.FC = () => {
           )}
         </Toolbar>
       </AppBar>
-      
-      <Container maxWidth="lg" sx={{ mt: 6, position: 'relative', zIndex: 1 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
+      <Toolbar /> {/* Add spacing for fixed AppBar */}
+      <Box sx={{ display: 'flex' }}>
+        <SideMenu onboardingProgress={onboardingProgress} companies={companies} />
         
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-            <CircularProgress sx={{ color: theme.palette.primary.main }} />
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {/* Sidebar */}
-            <Grid item xs={12} md={3}>
-              {/* User Profile */}
-              <UserProfile />
-              
-              {/* Company List */}
-              <Paper 
-                sx={{ 
-                  p: 3, 
-                  mt: 3,
-                  background: alpha('#111111', 0.7),
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)'
-                }}
-              >
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
-                  Your Companies
-                </Typography>
-                <Divider sx={{ mb: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-                
-                {companies.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No companies found
-                  </Typography>
-                ) : (
-                  <List sx={{ '& .MuiListItemButton-root': { borderRadius: 1 } }}>
-                    {companies.map((company) => (
-                      <ListItem key={company.id} disablePadding sx={{ mb: 1 }}>
-                        <ListItemButton
-                          selected={selectedCompany === company.id}
-                          onClick={() => selectCompany(company.id)}
+        <Box sx={{ flexGrow: 1 }}>
+          <Container maxWidth="lg" sx={{ mt: 6, position: 'relative', zIndex: 1 }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                {error}
+              </Alert>
+            )}
+            
+            {loading ? (
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                minHeight: '50vh'
+              }}>
+                <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
+              </Box>
+            ) : (
+              <Grid container spacing={3}>
+                {/* Main Content */}
+                <Grid item xs={12}>
+                  {selectedCompany ? (
+                    <>
+                      <Typography 
+                        variant="subtitle2" 
+                        sx={{ 
+                          fontSize: '0.7rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: 'white',
+                          mb: 0.2
+                        }}
+                      >
+                        Synthetic Essentials
+                      </Typography>
+                      <Typography 
+                        variant="h5" 
+                        sx={{ fontWeight: 600, mb: 3 }}
+                      >
+                        Set up {companies.find(c => c.id === selectedCompany)?.name} on Synthetic Teams
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', gap: 3 }}>
+                        <Paper 
                           sx={{ 
-                            borderRadius: 1,
-                            '&.Mui-selected': {
-                              backgroundColor: alpha(theme.palette.primary.main, 0.15),
-                              '&:hover': {
-                                backgroundColor: alpha(theme.palette.primary.main, 0.25),
-                              }
+                            p: 3,
+                            width: '35%',
+                            minHeight: '50vh',
+                            background: alpha('#111111', 0.7),
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: 2,
+                            '& .MuiTypography-h6': {
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              mb: 0.5
                             },
-                            '&:hover': {
-                              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                            '& .MuiTypography-body2': {
+                              fontSize: '12px',
+                              color: 'text.secondary'
                             }
                           }}
                         >
-                          <ListItemText 
-                            primary={company.name} 
-                            secondary={`Added: ${new Date(company.created_at).toLocaleDateString()}`}
-                            primaryTypographyProps={{ fontWeight: 500 }}
-                            secondaryTypographyProps={{ fontSize: '0.75rem', sx: { opacity: 0.7 } }}
+                          {selectedCompany && (
+                            <OnboardingProgress 
+                              companyId={selectedCompany} 
+                              onPhaseSelect={handlePhaseSelect}
+                            />
+                          )}
+                        </Paper>
+
+                        <Box sx={{ 
+                          flex: 1,
+                          minHeight: '50vh',
+                        }}>
+                          <DetailedOnboarding
+                            key={selectedPhaseName}
+                            selectedPhase={selectedPhaseName}
+                            steps={selectedPhaseSteps}
                           />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                )}
-              </Paper>
-            </Grid>
-            
-            {/* Main Content */}
-            <Grid item xs={12} md={9}>
-              {selectedCompany ? (
-                <>
-                  <Paper 
-                    sx={{ 
-                      p: 3, 
-                      background: alpha('#111111', 0.7),
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255, 255, 255, 0.05)'
-                    }}
-                  >
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                      {companies.find(c => c.id === selectedCompany)?.name || 'Company Dashboard'}
-                    </Typography>
-                    <Divider sx={{ mb: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-                    
-                    {selectedCompany && <OnboardingProgress companyId={selectedCompany} />}
-                  </Paper>
-                </>
-              ) : (
-                <Paper 
-                  sx={{ 
-                    p: 3, 
-                    textAlign: 'center',
-                    background: alpha('#111111', 0.7),
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)'
-                  }}
-                >
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    No company selected
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Please select a company from the list to view its dashboard
-                  </Typography>
-                </Paper>
-              )}
-            </Grid>
-          </Grid>
-        )}
-      </Container>
+                        </Box>
+                      </Box>
+                    </>
+                  ) : (
+                    <Paper 
+                      sx={{ 
+                        p: 3, 
+                        textAlign: 'center',
+                        background: alpha('#111111', 0.7),
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        No company selected
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Please select a company from the list to view its dashboard
+                      </Typography>
+                    </Paper>
+                  )}
+                </Grid>
+              </Grid>
+            )}
+          </Container>
+        </Box>
+      </Box>
     </Box>
   );
 };

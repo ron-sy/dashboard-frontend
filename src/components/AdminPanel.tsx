@@ -716,8 +716,13 @@ const AdminPanel: React.FC = () => {
           </Box>
           
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              minHeight: '200px'
+            }}>
+              <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
             </Box>
           ) : (
             <TableContainer>
@@ -776,8 +781,13 @@ const AdminPanel: React.FC = () => {
           </Box>
           
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              minHeight: '200px'
+            }}>
+              <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
             </Box>
           ) : (
             <TableContainer>
@@ -810,8 +820,13 @@ const AdminPanel: React.FC = () => {
           </Box>
           
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              minHeight: '200px'
+            }}>
+              <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
             </Box>
           ) : (
             <Box>
@@ -894,8 +909,13 @@ const AdminPanel: React.FC = () => {
           </Box>
           
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-              <CircularProgress />
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              minHeight: '200px'
+            }}>
+              <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
             </Box>
           ) : (
             <InvitationLinkGenerator companies={companies} />

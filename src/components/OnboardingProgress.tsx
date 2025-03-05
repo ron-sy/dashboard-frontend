@@ -1,36 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Box, 
-  Paper, 
   Typography, 
   CircularProgress,
   Alert,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  SelectChangeEvent,
-  alpha,
   useTheme,
-  Grid,
   Chip,
-  Tooltip,
+  LinearProgress,
   Button,
-  Divider,
-  LinearProgress
+  Collapse,
+  alpha,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CheckIcon from '@mui/icons-material/Check';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import PendingIcon from '@mui/icons-material/Pending';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 import { useAuth } from '../context/AuthContext';
 
-// Define the structure of an onboarding step
-interface OnboardingStep {
+export interface OnboardingStep {
   id: string;
   name: string;
   description: string;
-  status: 'todo' | 'in_progress' | 'done';
+  status: 'todo' | 'in_progress' | 'done' | 'skipped';
   updated_at: string;
 }
 
@@ -44,16 +36,24 @@ interface Company {
   user_is_admin: boolean;
 }
 
-interface OnboardingProgressProps {
-  companyId: string;
+interface OnboardingPhase {
+  name: string;
+  progress: number;
+  steps: OnboardingStep[];
+  status: 'todo' | 'in_progress' | 'done' | 'skipped';
 }
 
-const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId }) => {
+interface OnboardingProgressProps {
+  companyId: string;
+  onPhaseSelect: (phaseName: string, steps: OnboardingStep[]) => void;
+}
+
+const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPhaseSelect }) => {
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [updating, setUpdating] = useState<string | null>(null);
-  const [isUserAdmin, setIsUserAdmin] = useState(false);
+  const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
+  const [expandedPhases, setExpandedPhases] = useState<number[]>([]);
   const { getToken } = useAuth();
   const theme = useTheme();
   
@@ -81,7 +81,6 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId }) =>
         
         const companyData: Company = await response.json();
         setSteps(companyData.onboarding_steps);
-        setIsUserAdmin(companyData.user_is_admin);
         
         console.log(`User is${!companyData.user_is_admin ? ' not' : ''} an admin for this company`);
       } catch (err: any) {
@@ -94,133 +93,96 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId }) =>
     fetchCompany();
   }, [companyId, getToken]);
   
-  // Update the status of an onboarding step
-  const updateStepStatus = async (stepId: string, newStatus: 'todo' | 'in_progress' | 'done') => {
-    try {
-      // Only admins can update step status
-      if (!isUserAdmin) {
-        setError('Only administrators can update step status');
-        return;
-      }
-      
-      setUpdating(stepId);
-      const token = await getToken();
-      
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-      
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/companies/${companyId}/onboarding/${stepId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-      
-      if (!response.ok) {
-        // Try to parse error message from response
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to update onboarding step');
-      }
-      
-      const updatedStep = await response.json();
-      
-      // Update the steps array with the new status
-      setSteps(steps.map(step => 
-        step.id === stepId ? { ...step, status: newStatus } : step
-      ));
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-    } finally {
-      setUpdating(null);
-    }
-  };
-  
-  const handleStatusChange = (event: SelectChangeEvent, stepId: string) => {
-    const newStatus = event.target.value as 'todo' | 'in_progress' | 'done';
-    updateStepStatus(stepId, newStatus);
-  };
-  
   // Get status icon based on step status
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'done':
-        return <CheckCircleIcon sx={{ color: '#4CAF50', fontSize: 24 }} />;
+        return <CheckIcon sx={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.9)' }} />;
       case 'in_progress':
-        return <PendingIcon sx={{ color: '#FFC107', fontSize: 24 }} />;
+        return <AccessTimeIcon sx={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.9)' }} />;
       default:
-        return <RadioButtonUncheckedIcon sx={{ color: 'rgba(255, 255, 255, 0.3)', fontSize: 24 }} />;
+        return <RadioButtonUncheckedIcon sx={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.3)' }} />;
     }
   };
   
-  // Get text representation of status
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'done':
-        return 'Completed';
-      case 'in_progress':
-        return 'In Progress';
-      default:
-        return 'To Do';
-    }
-  };
+  // Get phase completion status icon
+  const getPhaseStatusIcon = (steps: OnboardingStep[]) => {
+    const allDone = steps.every(step => step.status === 'done');
+    const anyInProgress = steps.some(step => step.status === 'in_progress');
+    const allTodo = steps.every(step => step.status === 'todo');
 
-  // Get color for status badge
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'done':
-        return '#4CAF50';
-      case 'in_progress':
-        return '#FFC107';
-      default:
-        return 'rgba(255, 255, 255, 0.2)';
-    }
+    if (allDone) return <CheckIcon sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.9)' }} />;
+    if (anyInProgress) return <AccessTimeIcon sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.9)' }} />;
+    if (allTodo) return <RadioButtonUncheckedIcon sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.3)' }} />;
   };
-
-  // Calculate overall progress percentage
-  const calculateProgress = () => {
-    if (!steps.length) return 0;
-    const completed = steps.filter(step => step.status === 'done').length;
-    const inProgress = steps.filter(step => step.status === 'in_progress').length;
-    
-    // Count in-progress steps as half complete
-    return Math.round(((completed + (inProgress * 0.5)) / steps.length) * 100);
-  };
-
+  
   // Group steps into phases
   const groupStepsByPhase = () => {
-    // This is a simplified grouping - in a real app, you might have phase data from the backend
     const totalSteps = steps.length;
     if (totalSteps === 0) return [];
     
-    const stepsPerPhase = Math.ceil(totalSteps / 4); // Divide into 4 phases
+    const stepsPerPhase = Math.ceil(totalSteps / 4);
+    
+    const calculatePhaseStatus = (phaseSteps: OnboardingStep[]): 'todo' | 'in_progress' | 'done' | 'skipped' => {
+      const allDone = phaseSteps.every(step => step.status === 'done');
+      const anyInProgress = phaseSteps.some(step => step.status === 'in_progress');
+      const allSkipped = phaseSteps.every(step => step.status === 'skipped');
+      
+      if (allDone) return 'done';
+      if (anyInProgress) return 'in_progress';
+      if (allSkipped) return 'skipped';
+      return 'todo';
+    };
+
+    const calculateProgress = (phaseSteps: OnboardingStep[]): number => {
+      if (phaseSteps.length === 0) return 0;
+      const completedSteps = phaseSteps.filter(step => step.status === 'done').length;
+      return (completedSteps / phaseSteps.length) * 100;
+    };
+    
+    // Create non-overlapping slices of steps for each phase
+    const phase1Steps = steps.slice(0, stepsPerPhase);
+    const phase2Steps = steps.slice(stepsPerPhase, stepsPerPhase * 2);
+    const phase3Steps = steps.slice(stepsPerPhase * 2, stepsPerPhase * 3);
+    const phase4Steps = steps.slice(stepsPerPhase * 3);
     
     return [
       {
         name: "Setup & Onboarding",
-        steps: steps.slice(0, stepsPerPhase)
+        steps: phase1Steps,
+        progress: calculateProgress(phase1Steps),
+        status: calculatePhaseStatus(phase1Steps)
       },
       {
-        name: "Integration & Training",
-        steps: steps.slice(stepsPerPhase, stepsPerPhase * 2)
+        name: "Goals & Integration",
+        steps: phase2Steps,
+        progress: calculateProgress(phase2Steps),
+        status: calculatePhaseStatus(phase2Steps)
       },
       {
-        name: "Deployment & Feedback",
-        steps: steps.slice(stepsPerPhase * 2, stepsPerPhase * 3)
+        name: "Training & Deployment",
+        steps: phase3Steps,
+        progress: calculateProgress(phase3Steps),
+        status: calculatePhaseStatus(phase3Steps)
       },
       {
         name: "Optimization & Support",
-        steps: steps.slice(stepsPerPhase * 3)
+        steps: phase4Steps,
+        progress: calculateProgress(phase4Steps),
+        status: calculatePhaseStatus(phase4Steps)
       }
     ];
   };
   
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        minHeight: '200px'
+      }}>
+        <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
       </Box>
     );
   }
@@ -233,310 +195,118 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId }) =>
     );
   }
 
-  const progress = calculateProgress();
   const phases = groupStepsByPhase();
   
+  const handlePhaseClick = (phase: OnboardingPhase, phaseIndex: number) => {
+    // Toggle expansion
+    setExpandedPhases(prev => {
+      if (prev.includes(phaseIndex)) {
+        return prev.filter(p => p !== phaseIndex);
+      } else {
+        return [...prev, phaseIndex];
+      }
+    });
+    
+    // Set selected phase
+    setSelectedPhase(phaseIndex);
+    
+    // Make a clean copy of the phase steps to avoid reference issues
+    const cleanPhaseSteps = [...phase.steps];
+    
+    if (onPhaseSelect) {
+      // Pass a clean copy of the steps to avoid state issues
+      onPhaseSelect(phase.name, cleanPhaseSteps);
+    }
+  };
+
   return (
-    <Box sx={{ mt: 3 }}>
-      {/* Overall Progress Card */}
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 3, 
-          mb: 3,
-          background: alpha('#111111', 0.7),
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          borderRadius: 3
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Onboarding Progress
-          </Typography>
-          <Chip 
-            label={`${progress}% Complete`} 
-            sx={{ 
-              backgroundColor: alpha(theme.palette.primary.main, 0.2),
-              color: theme.palette.primary.main,
-              fontWeight: 600,
+    <Box sx={{ mt: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {phases.map((phase, phaseIndex) => {
+        const isSelected = selectedPhase === phaseIndex;
+        const isExpanded = expandedPhases.includes(phaseIndex);
+        const completedSteps = phase.steps.filter(s => s.status === 'done').length;
+        const hasSkipped = phase.steps.some(step => step.status === 'skipped');
+
+        return (
+          <Box
+            key={phaseIndex}
+            onClick={() => handlePhaseClick(phase, phaseIndex)}
+            sx={{
+              p: 2.5,
               borderRadius: 2,
-              px: 1
-            }} 
-          />
-        </Box>
-        
-        <LinearProgress 
-          variant="determinate" 
-          value={progress} 
-          sx={{ 
-            height: 10, 
-            borderRadius: 5,
-            mb: 2,
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            '& .MuiLinearProgress-bar': {
-              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`,
-              borderRadius: 5
-            }
-          }} 
-        />
-        
-        {!isUserAdmin && (
-          <Alert 
-            severity="info" 
-            sx={{ 
-              mt: 2,
-              borderRadius: 2,
-              background: alpha(theme.palette.primary.main, 0.1),
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+              backgroundColor: isSelected ? alpha('#1E88E5', 0.1) : '#111111',
+              border: isSelected ? '1px solid #1E88E5' : '1px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                backgroundColor: isSelected ? alpha('#1E88E5', 0.15) : '#161616'
+              }
             }}
           >
-            You are viewing this in read-only mode. Only administrators can update the status of onboarding steps.
-          </Alert>
-        )}
-      </Paper>
-      
-      {/* Phase-based Steps Display */}
-      {phases.map((phase, phaseIndex) => (
-        <Paper 
-          key={`phase-${phaseIndex}`}
-          elevation={3} 
-          sx={{ 
-            p: 3, 
-            mb: 3,
-            background: alpha('#111111', 0.7),
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            borderRadius: 3
-          }}
-        >
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              mb: 3, 
-              fontWeight: 600,
-              color: theme.palette.primary.main,
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <Box 
-              sx={{ 
-                width: 30, 
-                height: 30, 
-                borderRadius: '50%', 
-                backgroundColor: alpha(theme.palette.primary.main, 0.2),
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mr: 2,
-                fontWeight: 700
-              }}
-            >
-              {phaseIndex + 1}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  {phase.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {completedSteps} of {phase.steps.length} steps complete
+                  {hasSkipped && ' (some steps skipped)'}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease-in-out'
+                }}
+              >
+                <ExpandMoreIcon />
+              </Box>
             </Box>
-            {phase.name}
-          </Typography>
-          
-          <Grid container spacing={2}>
-            {phase.steps.map((step) => (
-              <Grid item xs={12} key={step.id}>
-                <Box 
-                  sx={{ 
-                    p: 3, 
-                    borderRadius: 2,
-                    border: `1px solid ${alpha(getStatusColor(step.status), 0.3)}`,
-                    backgroundColor: alpha(getStatusColor(step.status), 0.05),
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                    <Box sx={{ mr: 2, mt: 0.5 }}>
-                      {getStatusIcon(step.status)}
+            
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+              <Box sx={{ mt: 2 }}>
+                {phase.steps.map((step, stepIndex) => (
+                  <Box
+                    key={stepIndex}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      py: 1,
+                      '&:not(:last-child)': {
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                      }
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: step.status === 'done' 
+                          ? '#4CAF50'
+                          : step.status === 'skipped'
+                          ? '#FF9800'
+                          : 'transparent',
+                        border: step.status === 'todo' ? '2px solid rgba(255, 255, 255, 0.3)' : 'none',
+                        mr: 2
+                      }}
+                    >
+                      {step.status === 'done' && <CheckIcon sx={{ fontSize: 14, color: 'white' }} />}
+                      {step.status === 'skipped' && <SkipNextIcon sx={{ fontSize: 14, color: 'white' }} />}
                     </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                        {step.name}
-                      </Typography>
-                      <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 2 }}>
-                        {step.description}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ ml: 2 }}>
-                      {isUserAdmin ? (
-                        <FormControl 
-                          size="small" 
-                          sx={{ 
-                            minWidth: 150,
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: 2,
-                              backgroundColor: alpha('#000000', 0.2)
-                            }
-                          }}
-                        >
-                          <Select
-                            value={step.status}
-                            onChange={(e) => handleStatusChange(e, step.id)}
-                            disabled={updating === step.id}
-                            displayEmpty
-                            renderValue={(value) => (
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Box 
-                                  sx={{ 
-                                    width: 8, 
-                                    height: 8, 
-                                    borderRadius: '50%', 
-                                    backgroundColor: getStatusColor(value as string),
-                                    mr: 1 
-                                  }} 
-                                />
-                                {getStatusText(value as string)}
-                              </Box>
-                            )}
-                          >
-                            <MenuItem value="todo">To Do</MenuItem>
-                            <MenuItem value="in_progress">In Progress</MenuItem>
-                            <MenuItem value="done">Completed</MenuItem>
-                          </Select>
-                          {updating === step.id && (
-                            <CircularProgress size={16} sx={{ ml: 1, position: 'absolute', right: -24, top: 8 }} />
-                          )}
-                        </FormControl>
-                      ) : (
-                        <Chip 
-                          size="medium"
-                          label={getStatusText(step.status)} 
-                          sx={{ 
-                            backgroundColor: alpha(getStatusColor(step.status), 0.2),
-                            color: getStatusColor(step.status),
-                            fontWeight: 500,
-                            borderRadius: 1,
-                            px: 1
-                          }} 
-                        />
-                      )}
-                    </Box>
-                  </Box>
-                  
-                  <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                      Updated: {new Date(step.updated_at).toLocaleDateString()}
+                    <Typography variant="body2">
+                      {step.name}
                     </Typography>
                   </Box>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
-      ))}
-      
-      {/* Summary Card */}
-      {steps.length > 0 && (
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 3,
-            background: alpha('#111111', 0.7),
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            borderRadius: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center'
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-            Onboarding Summary
-          </Typography>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                mr: 3 
-              }}
-            >
-              <Box 
-                sx={{ 
-                  width: 10, 
-                  height: 10, 
-                  borderRadius: '50%', 
-                  backgroundColor: '#4CAF50',
-                  mr: 1 
-                }} 
-              />
-              <Typography variant="body2">
-                {steps.filter(s => s.status === 'done').length} Completed
-              </Typography>
-            </Box>
-            
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                mr: 3 
-              }}
-            >
-              <Box 
-                sx={{ 
-                  width: 10, 
-                  height: 10, 
-                  borderRadius: '50%', 
-                  backgroundColor: '#FFC107',
-                  mr: 1 
-                }} 
-              />
-              <Typography variant="body2">
-                {steps.filter(s => s.status === 'in_progress').length} In Progress
-              </Typography>
-            </Box>
-            
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center' 
-              }}
-            >
-              <Box 
-                sx={{ 
-                  width: 10, 
-                  height: 10, 
-                  borderRadius: '50%', 
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                  mr: 1 
-                }} 
-              />
-              <Typography variant="body2">
-                {steps.filter(s => s.status === 'todo').length} To Do
-              </Typography>
-            </Box>
+                ))}
+              </Box>
+            </Collapse>
           </Box>
-          
-          {progress >= 50 && (
-            <Box 
-              sx={{ 
-                mt: 2, 
-                p: 2, 
-                borderRadius: 2, 
-                backgroundColor: alpha('#4CAF50', 0.1),
-                border: '1px solid rgba(76, 175, 80, 0.2)',
-                maxWidth: 500
-              }}
-            >
-              <Typography variant="body2" sx={{ color: '#4CAF50' }}>
-                {progress === 100 
-                  ? "Congratulations! You've completed all onboarding steps." 
-                  : "You're making great progress! Continue working through the remaining steps."}
-              </Typography>
-            </Box>
-          )}
-        </Paper>
-      )}
+        );
+      })}
     </Box>
   );
 };

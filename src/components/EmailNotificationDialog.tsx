@@ -251,7 +251,7 @@ const EmailNotificationDialog: React.FC<EmailNotificationDialogProps> = ({
           color="primary"
           disabled={!isValid() || loading || loadingTemplates || templates.length === 0}
         >
-          {loading ? <CircularProgress size={24} sx={{ mr: 1 }} /> : null}
+          {loading ? <CircularProgress size={16} sx={{ color: 'rgba(255, 255, 255, 0.5)', mr: 1 }} /> : null}
           {loading ? 'Sending...' : 'Send'}
         </Button>
       </DialogActions>
