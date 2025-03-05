@@ -121,7 +121,11 @@ const Dashboard: React.FC = () => {
   
   const handlePhaseSelect = (phaseName: string, phaseSteps: OnboardingStep[]) => {
     console.log('Dashboard handling phase select:', phaseName);
-    console.log('Dashboard received new steps:', phaseSteps);
+    console.log('Dashboard received new steps:', JSON.stringify(phaseSteps, null, 2));
+    
+    // Check for steps with doneText
+    const stepsWithDoneText = phaseSteps.filter(step => step.doneText);
+    console.log('Steps with doneText in Dashboard:', JSON.stringify(stepsWithDoneText, null, 2));
     
     // Clear previous steps and set the new ones
     setSelectedPhaseName(phaseName);
@@ -129,7 +133,10 @@ const Dashboard: React.FC = () => {
     
     // Use setTimeout to ensure the state update has been processed
     setTimeout(() => {
-      setSelectedPhaseSteps([...phaseSteps]); // Then set the new steps
+      // Create a deep copy of the steps to ensure all properties are preserved
+      const deepCopySteps = phaseSteps.map(step => ({...step}));
+      console.log('Deep copy of steps before setting state:', JSON.stringify(deepCopySteps, null, 2));
+      setSelectedPhaseSteps(deepCopySteps); // Then set the new steps
     }, 0);
   };
   

@@ -24,6 +24,9 @@ export interface OnboardingStep {
   description: string;
   status: 'todo' | 'in_progress' | 'done' | 'skipped';
   updated_at: string;
+  donelink?: string | null;
+  clickable?: boolean;
+  doneText?: string;
 }
 
 // Company response from API with admin flag
@@ -80,6 +83,14 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPh
         }
         
         const companyData: Company = await response.json();
+        
+        // Debug log to check if doneText is present in the API response
+        console.log('API response company data:', JSON.stringify(companyData, null, 2));
+        
+        // Check for steps with doneText in the API response
+        const stepsWithDoneText = companyData.onboarding_steps.filter(step => step.doneText);
+        console.log('Steps with doneText in API response:', JSON.stringify(stepsWithDoneText, null, 2));
+        
         setSteps(companyData.onboarding_steps);
         
         console.log(`User is${!companyData.user_is_admin ? ' not' : ''} an admin for this company`);
@@ -209,6 +220,13 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPh
     
     // Set selected phase
     setSelectedPhase(phaseIndex);
+    
+    // Debug log to check if doneText is present in the steps
+    console.log('Phase steps before passing to parent:', JSON.stringify(phase.steps, null, 2));
+    
+    // Check for steps with doneText
+    const stepsWithDoneText = phase.steps.filter(step => step.doneText);
+    console.log('Steps with doneText before passing to parent:', JSON.stringify(stepsWithDoneText, null, 2));
     
     // Make a clean copy of the phase steps to avoid reference issues
     const cleanPhaseSteps = [...phase.steps];

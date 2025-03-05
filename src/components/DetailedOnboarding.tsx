@@ -20,6 +20,7 @@ interface OnboardingStep {
   updated_at: string;
   donelink?: string | null;
   clickable?: boolean;
+  doneText?: string;
 }
 
 interface DetailedOnboardingProps {
@@ -47,7 +48,7 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
 
   const getDoneLink = (step: OnboardingStep) => {
     // Debug log to verify the data
-    console.log('Step donelink data:', { donelink: step.donelink, clickable: step.clickable });
+    console.log('Step donelink data:', { donelink: step.donelink, clickable: step.clickable, doneText: step.doneText });
 
     if (!step.donelink) return null;
 
@@ -76,14 +77,14 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
             }
           }}
         >
-          {step.donelink}
+          {step.doneText || step.donelink}
         </Button>
       );
     }
 
     return (
       <Chip
-        label={step.donelink}
+        label={step.doneText || step.donelink}
         size="small"
         sx={{
           backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -95,25 +96,52 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
   };
 
   const getActionButton = (step: OnboardingStep) => {
+    // Debug log for action button logic
+    console.log('getActionButton for step:', step.name, {
+      status: step.status,
+      donelink: step.donelink,
+      clickable: step.clickable,
+      doneText: step.doneText
+    });
+    
     switch (step.status) {
       case 'done':
-        // For done steps with a donelink that is clickable, show a "View" button
+        // For done steps with a clickable donelink, show a button with doneText or "View"
         if (step.donelink && step.clickable) {
+          const buttonLabel = step.doneText || "View";
+          console.log('Rendering clickable button for:', step.name, 'with label:', buttonLabel);
           return (
-            <Button
-              variant="contained"
-              endIcon={<LaunchIcon />}
+            <Chip
+              label={buttonLabel}
+              size="small"
+              clickable
               onClick={() => window.open(step.donelink as string, '_blank')}
+              deleteIcon={<LaunchIcon style={{ fontSize: 14 }} />}
+              onDelete={() => window.open(step.donelink as string, '_blank')}
               sx={{
-                backgroundColor: alpha('#4CAF50', 0.2),
-                color: '#4CAF50',
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                color: 'rgba(255, 255, 255, 0.6)',
+                height: '24px',
+                fontSize: '12px',
                 '&:hover': {
-                  backgroundColor: alpha('#4CAF50', 0.3),
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
                 }
               }}
-            >
-              View
-            </Button>
+            />
+          );
+        } else if (step.doneText) {
+          // For done steps with doneText but no clickable link
+          return (
+            <Chip
+              label={step.doneText}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                color: 'rgba(255, 255, 255, 0.6)',
+                height: '24px',
+                fontSize: '12px'
+              }}
+            />
           );
         }
         return null;
