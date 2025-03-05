@@ -1,23 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
-  Button, 
-  TextField, 
   Typography, 
-  Paper, 
-  Container, 
-  Alert, 
-  alpha,
-  useTheme,
   InputAdornment,
   IconButton,
-  Tabs,
-  Tab
+  useTheme,
+  Tooltip,
+  useMediaQuery,
+  Tab,
+  Tabs
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import GoogleIcon from '@mui/icons-material/Google';
+import MicrosoftIcon from '@mui/icons-material/Microsoft';
+import AnimatedGradientButton from './AnimatedGradientButton';
+import ParticleField from './physics/ParticleField';
+import {
+  LoginContainer,
+  MainContent,
+  LoginSection,
+  LoginContent,
+  LoginFooter,
+  LoginFooterLinks,
+  LoginFooterLink,
+  Copyright,
+  GraphicSection,
+  Logo,
+  LoginPaper,
+  StyledTextField,
+  SocialButton,
+  ErrorAlert,
+  Divider,
+  FooterText,
+  OverlayText
+} from './LoginStyles';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -53,10 +72,23 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [particleCount, setParticleCount] = useState(80);
   
   const { login, register } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  useEffect(() => {
+    if (isSmallScreen) {
+      setParticleCount(40);
+    } else if (isMobile) {
+      setParticleCount(60);
+    } else {
+      setParticleCount(80);
+    }
+  }, [isMobile, isSmallScreen]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -71,12 +103,9 @@ const Login: React.FC = () => {
       setLoading(true);
       const user = await login(email, password);
       
-      // Check if email is verified
       if (!user.emailVerified) {
-        // Redirect to email verification page if email is not verified
         navigate('/verify-email');
       } else {
-        // Redirect to dashboard if email is verified
         navigate('/dashboard');
       }
     } catch (err: any) {
@@ -101,8 +130,6 @@ const Login: React.FC = () => {
       setError('');
       setLoading(true);
       const user = await register(email, password);
-      
-      // Redirect to email verification page instead of dashboard
       navigate('/verify-email');
     } catch (err: any) {
       setError('Failed to create account: ' + (err.message || 'Unknown error'));
@@ -116,306 +143,260 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #000000 0%, #121212 100%)',
-        backgroundSize: 'cover',
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'url("/network-grid.svg") no-repeat center center',
-          backgroundSize: 'cover',
-          opacity: 0.1,
-          pointerEvents: 'none',
-          zIndex: 0
-        }
-      }}
-    >
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
-        <Box sx={{ mb: 6, textAlign: 'center' }}>
-          <Box 
-            component="img" 
-            src="/synthetic-teams-logo.svg" 
-            alt="Synthetic Teams" 
-            sx={{ height: 50, mb: 2 }}
-          />
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 700,
-              mb: 1
-            }}
-          >
-            synthetic<Box component="span" sx={{ color: theme.palette.primary.main }}>teams</Box>
-          </Typography>
-        </Box>
-        
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4, 
-            borderRadius: 3,
-            background: alpha('#111111', 0.7),
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.05)'
-          }}
-        >
-          <Typography 
-            component="h2" 
-            variant="h5" 
-            align="center" 
-            sx={{ 
-              mb: 3, 
-              fontWeight: 600,
-              color: theme.palette.primary.main
-            }}
-          >
-            Deploy the Hybrid Workforce of the Future
-          </Typography>
-          
-          {error && (
-            <Alert 
-              severity="error" 
-              sx={{ 
-                mb: 3, 
-                borderRadius: 2,
-                background: alpha('#f44336', 0.1),
-                border: '1px solid rgba(244, 67, 54, 0.2)'
-              }}
-            >
-              {error}
-            </Alert>
-          )}
-          
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange} 
-            variant="fullWidth" 
-            sx={{ 
-              borderBottom: 1, 
-              borderColor: 'divider',
-              '& .MuiTab-root': {
-                fontWeight: 600,
-                fontSize: '0.9rem',
-              }
-            }}
-          >
-            <Tab label="Login" />
-            <Tab label="Create Account" />
-          </Tabs>
-          
-          <TabPanel value={tabValue} index={0}>
-            <Box component="form" onSubmit={handleLogin}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 1,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  }
-                }
-              }}
-            />
-            
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={toggleShowPassword}
-                      edge="end"
-                      sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
+    <LoginContainer>
+      <MainContent>
+        <LoginSection>
+          <LoginContent>
+            <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 400, md: 448 } }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Logo>
+                  <Box 
+                    component="img" 
+                    src="/synthetic-teams-logo.svg" 
+                    alt="Synthetic Teams"
+                    sx={{ width: '100%', height: '100%' }}
+                  />
+                </Logo>
+              </Box>
+
+              <LoginPaper elevation={0}>
+                <Typography component="h1">
+                  {tabValue === 0 ? 'Sign in to your account' : 'Create your account'}
+                </Typography>
+
+                {error && <ErrorAlert severity="error">{error}</ErrorAlert>}
+
+                <Tabs 
+                  value={tabValue} 
+                  onChange={handleTabChange} 
+                  variant="fullWidth" 
+                  sx={{ 
+                    borderBottom: 1, 
+                    borderColor: 'divider',
+                    mb: 3,
+                    '& .MuiTab-root': {
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                    }
+                  }}
+                >
+                  <Tab label="Login" />
+                  <Tab label="Create Account" />
+                </Tabs>
+
+                <TabPanel value={tabValue} index={0}>
+                  <Box component="form" onSubmit={handleLogin}>
+                    <StyledTextField
+                      required
+                      fullWidth
+                      id="email"
+                      label="Email"
+                      name="email"
+                      autoComplete="email"
+                      autoFocus
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com"
+                    />
+
+                    <StyledTextField
+                      required
+                      fullWidth
+                      name="password"
+                      label="Password"
+                      type={showPassword ? 'text' : 'password'}
+                      id="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={toggleShowPassword}
+                              edge="end"
+                              size="small"
+                              sx={{ 
+                                color: '#6B7280',
+                                padding: '4px',
+                                '&:hover': {
+                                  backgroundColor: '#F3F4F6'
+                                }
+                              }}
+                            >
+                              {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+
+                    <AnimatedGradientButton
+                      onClick={handleLogin}
+                      disabled={loading}
+                      loading={loading}
                     >
-                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 1,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  }
-                }
-              }}
-            />
-            
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ 
-                mt: 3, 
-                mb: 2,
-                py: 1.5,
-                fontSize: '1rem'
-              }}
-              disabled={loading}
-            >
-                {loading ? 'Logging in...' : 'Sign In'}
-              </Button>
+                      Sign in
+                    </AnimatedGradientButton>
+
+                    <Divider>
+                      <span>or</span>
+                    </Divider>
+
+                    <Tooltip title="Coming soon" arrow placement="top">
+                      <span style={{ width: '100%' }}>
+                        <SocialButton
+                          fullWidth
+                          startIcon={<GoogleIcon sx={{ fontSize: 20 }} />}
+                          onClick={(e) => e.preventDefault()}
+                          disabled
+                        >
+                          Sign in with Google
+                        </SocialButton>
+                      </span>
+                    </Tooltip>
+
+                    <Tooltip title="Coming soon" arrow placement="top">
+                      <span style={{ width: '100%' }}>
+                        <SocialButton
+                          fullWidth
+                          startIcon={<MicrosoftIcon sx={{ fontSize: 20 }} />}
+                          onClick={(e) => e.preventDefault()}
+                          disabled
+                        >
+                          Sign in with Microsoft
+                        </SocialButton>
+                      </span>
+                    </Tooltip>
+                  </Box>
+                </TabPanel>
+
+                <TabPanel value={tabValue} index={1}>
+                  <Box component="form" onSubmit={handleRegister}>
+                    <StyledTextField
+                      required
+                      fullWidth
+                      id="email"
+                      label="Email"
+                      name="email"
+                      autoComplete="email"
+                      autoFocus
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com"
+                    />
+
+                    <StyledTextField
+                      required
+                      fullWidth
+                      name="password"
+                      label="Password"
+                      type={showPassword ? 'text' : 'password'}
+                      id="password"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={toggleShowPassword}
+                              edge="end"
+                              size="small"
+                              sx={{ 
+                                color: '#6B7280',
+                                padding: '4px',
+                                '&:hover': {
+                                  backgroundColor: '#F3F4F6'
+                                }
+                              }}
+                            >
+                              {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+
+                    <StyledTextField
+                      required
+                      fullWidth
+                      name="confirmPassword"
+                      label="Confirm Password"
+                      type={showPassword ? 'text' : 'password'}
+                      id="confirmPassword"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={toggleShowPassword}
+                              edge="end"
+                              size="small"
+                              sx={{ 
+                                color: '#6B7280',
+                                padding: '4px',
+                                '&:hover': {
+                                  backgroundColor: '#F3F4F6'
+                                }
+                              }}
+                            >
+                              {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+
+                    <AnimatedGradientButton
+                      onClick={handleRegister}
+                      disabled={loading}
+                      loading={loading}
+                    >
+                      Create Account
+                    </AnimatedGradientButton>
+                  </Box>
+                </TabPanel>
+              </LoginPaper>
+
+              <FooterText>
+                {tabValue === 0 ? (
+                  <>New to Synthetic Teams? <a href="#" onClick={(e) => { e.preventDefault(); setTabValue(1); }}>Sign up</a></>
+                ) : (
+                  <>Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setTabValue(0); }}>Sign in</a></>
+                )}
+              </FooterText>
             </Box>
-          </TabPanel>
+          </LoginContent>
           
-          <TabPanel value={tabValue} index={1}>
-            <Box component="form" onSubmit={handleRegister}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="register-email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                    }
-                  }
-                }}
-              />
-              
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                id="register-password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={toggleShowPassword}
-                        edge="end"
-                        sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
-                      >
-                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                    }
-                  }
-                }}
-              />
-              
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="confirmPassword"
-                label="Confirm Password"
-                type={showPassword ? 'text' : 'password'}
-                id="confirm-password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={toggleShowPassword}
-                        edge="end"
-                        sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
-                      >
-                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                    }
-                  }
-                }}
-              />
-              
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ 
-                  mt: 3, 
-                  mb: 2,
-                  py: 1.5,
-                  fontSize: '1rem'
-                }}
-                disabled={loading}
-              >
-                {loading ? 'Creating Account...' : 'Create Account'}
-            </Button>
-            </Box>
-          </TabPanel>
-            
-            <Typography 
-              variant="body2" 
-              align="center" 
-              sx={{ 
-                mt: 2, 
-                color: 'rgba(255, 255, 255, 0.5)',
-                fontSize: '0.75rem'
-              }}
-            >
-              hiring <Box component="span" sx={{ opacity: 0.7 }}>human</Box> engineers and ml researchers
-            </Typography>
-        </Paper>
-      </Container>
-    </Box>
+          <LoginFooter>
+            <Copyright>
+              Copyright © {new Date().getFullYear()} Synthetic Teams Inc.
+            </Copyright>
+            <LoginFooterLinks>
+              <LoginFooterLink href="/platform-agreement">
+                Platform Agreement
+              </LoginFooterLink>
+              <LoginFooterLink href="/privacy">
+                Privacy Policy
+              </LoginFooterLink>
+            </LoginFooterLinks>
+          </LoginFooter>
+        </LoginSection>
+
+        <GraphicSection>
+          <OverlayText variant="h3">
+            Deploy the Hybrid Workforce of the Future
+          </OverlayText>
+          <ParticleField particleCount={particleCount} noGoZone={true} />
+        </GraphicSection>
+      </MainContent>
+    </LoginContainer>
   );
 };
 

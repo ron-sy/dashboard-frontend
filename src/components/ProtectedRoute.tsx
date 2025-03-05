@@ -17,7 +17,7 @@ const ProtectedRoute: React.FC = () => {
           background: 'linear-gradient(135deg, #000000 0%, #121212 100%)',
         }}
       >
-        <CircularProgress color="primary" />
+        <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
       </Box>
     );
   }

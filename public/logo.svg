@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="5484px" height="1721px" viewBox="0 0 5484 1721" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group</title>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="v-copy" transform="translate(-717, -1343)">
+            <g id="Group" transform="translate(717, 1343)">
+                <g id="Group-2" transform="translate(0, 310)">
+                    <rect id="Rectangle" fill="#FFFFFF" x="0" y="0" width="1286" height="1286" rx="216"></rect>
+                    <path d="M284.854986,409.955119 C462.573185,588.900609 561.153665,838.32725 580.596427,1158.23504 L779.321064,977.047079 L284.854986,158.012822" id="Path-8-Copy" fill="#000000"></path>
+                    <path d="M449.797466,380.090882 C627.515664,559.036372 726.096144,808.463013 745.538906,1128.37081 L944.263543,947.182842 L449.797466,128.148585" id="Path-8" fill="#000000" transform="translate(697.0305, 628.2597) scale(-1, -1) translate(-697.0305, -628.2597)"></path>
+                    <polygon id="Path-9" fill="#000000" points="648.522103 128.148585 449.797466 309.33655 558.167456 490.522394"></polygon>
+                </g>
+                <text id="synthetic" font-family="Avenir-Heavy, Avenir" font-size="900" font-weight="600" letter-spacing="-40.5" fill="#FFFFFF">
+                    <tspan x="1513" y="900">synthetic</tspan>
+                </text>
+                <text id="teams." font-family="Avenir-Heavy, Avenir" font-size="900" font-weight="600" letter-spacing="-40.5">
+                    <tspan x="2894" y="1392" fill="#FFFFFF">teams</tspan>
+                    <tspan x="5224.1" y="1392" fill="#7CC0FE">.</tspan>
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>
