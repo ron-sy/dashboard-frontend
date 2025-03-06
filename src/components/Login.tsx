@@ -149,14 +149,17 @@ const Login: React.FC = () => {
           <LoginContent>
             <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 400, md: 448 } }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Logo>
-                  <Box 
-                    component="img" 
-                    src="/synthetic-teams-logo.svg" 
-                    alt="Synthetic Teams"
-                    sx={{ width: '100%', height: '100%' }}
-                  />
-                </Logo>
+                <Box 
+                  component="img" 
+                  src="/synthetic-teams-logo.svg" 
+                  alt="Synthetic Teams"
+                  sx={{ 
+                    width: '180px',
+                    height: 'auto',
+                    margin: '0 auto 32px auto',
+                    display: 'block'
+                  }}
+                />
               </Box>
 
               <LoginPaper elevation={0}>
