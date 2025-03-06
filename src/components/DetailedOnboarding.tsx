@@ -46,91 +46,47 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
     }
   };
 
-  const getDoneLink = (step: OnboardingStep) => {
-    // Debug log to verify the data
-    console.log('Step donelink data:', { donelink: step.donelink, clickable: step.clickable, doneText: step.doneText });
-
-    if (!step.donelink) return null;
-
-    if (step.clickable) {
-      return (
-        <Button
-          variant="outlined"
-          size="small"
-          component="a"
-          href={step.donelink}
-          target="_blank"
-          rel="noopener noreferrer"
-          endIcon={<OpenInNewIcon sx={{ fontSize: 16 }} />}
-          onClick={(e) => {
-            e.preventDefault();
-            window.open(step.donelink as string, '_blank');
-          }}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.7)',
-            borderColor: 'rgba(255, 255, 255, 0.2)',
-            textDecoration: 'none',
-            '&:hover': {
-              borderColor: 'rgba(255, 255, 255, 0.3)',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              textDecoration: 'none'
-            }
-          }}
-        >
-          {step.doneText || step.donelink}
-        </Button>
-      );
-    }
-
-    return (
-      <Chip
-        label={step.doneText || step.donelink}
-        size="small"
-        sx={{
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          color: 'rgba(255, 255, 255, 0.7)',
-          height: '24px'
-        }}
-      />
-    );
-  };
-
-  const getActionButton = (step: OnboardingStep) => {
-    // Debug log for action button logic
-    console.log('getActionButton for step:', step.name, {
-      status: step.status,
-      donelink: step.donelink,
-      clickable: step.clickable,
-      doneText: step.doneText
-    });
-    
+  const getStepAction = (step: OnboardingStep) => {
     switch (step.status) {
       case 'done':
-        // For done steps with a clickable donelink, show a button with doneText or "View"
-        if (step.donelink && step.clickable) {
-          const buttonLabel = step.doneText || "View";
-          console.log('Rendering clickable button for:', step.name, 'with label:', buttonLabel);
+        if (step.donelink) {
+          // If it's clickable, show as a button with an icon
+          if (step.clickable) {
+            return (
+              <Chip
+                label={step.doneText || "View"}
+                size="small"
+                clickable
+                onClick={() => window.open(step.donelink as string, '_blank')}
+                deleteIcon={<LaunchIcon style={{ fontSize: 14 }} />}
+                onDelete={() => window.open(step.donelink as string, '_blank')}
+                sx={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  height: '24px',
+                  fontSize: '12px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                  }
+                }}
+              />
+            );
+          }
+          // If not clickable, show as a regular chip
           return (
             <Chip
-              label={buttonLabel}
+              label={step.doneText || step.donelink}
               size="small"
-              clickable
-              onClick={() => window.open(step.donelink as string, '_blank')}
-              deleteIcon={<LaunchIcon style={{ fontSize: 14 }} />}
-              onDelete={() => window.open(step.donelink as string, '_blank')}
               sx={{
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                color: 'rgba(255, 255, 255, 0.6)',
-                height: '24px',
-                fontSize: '12px',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                }
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'rgba(255, 255, 255, 0.7)',
+                height: '24px'
               }}
             />
           );
-        } else if (step.doneText) {
-          // For done steps with doneText but no clickable link
+        }
+        // If no donelink but has doneText, show as a simple chip
+        if (step.doneText) {
           return (
             <Chip
               label={step.doneText}
@@ -160,21 +116,6 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
             Continue
           </Button>
         );
-      case 'skipped':
-        return (
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: alpha('#000000', 0.3),
-              color: 'white',
-              '&:hover': {
-                backgroundColor: alpha('#000000', 0.4),
-              }
-            }}
-          >
-            Get started
-          </Button>
-        );
       default:
         return (
           <Button
@@ -192,9 +133,6 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
         );
     }
   };
-
-  // Debug log to verify the steps data
-  console.log('Received steps:', steps);
 
   if (!selectedPhase || steps.length === 0) {
     return (
@@ -220,9 +158,6 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
       </Typography>
 
       {steps.map((step) => {
-        // Debug log for each step
-        console.log('Rendering step:', step);
-        
         return (
           <Box
             key={step.id}
@@ -233,7 +168,7 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
               border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: step.donelink && !step.clickable ? 2 : 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
               {getStatusIcon(step.status)}
               <Box sx={{ flex: 1 }}>
                 <Typography variant="h6" sx={{ fontSize: '18px', color: 'white', mb: 1 }}>
@@ -243,13 +178,8 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
                   {step.description}
                 </Typography>
               </Box>
-              {getActionButton(step)}
+              {getStepAction(step)}
             </Box>
-            {step.donelink && !step.clickable && (
-              <Box sx={{ ml: 5, mt: 2 }}>
-                {getDoneLink(step)}
-              </Box>
-            )}
           </Box>
         );
       })}

@@ -6,9 +6,18 @@ import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
 import EmailVerificationPage from './pages/EmailVerificationPage';
 import RegisterWithInvitationPage from './pages/RegisterWithInvitationPage';
+import Account from './pages/Account';
+import Billing from './pages/Billing';
+import Referrals from './pages/Referrals';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerifiedRoute from './components/VerifiedRoute';
+import DashboardLayout from './components/DashboardLayout';
+import CompanyTeam from './pages/CompanyTeam';
+import CompanyDataSharing from './pages/CompanyDataSharing';
+import CompanyOutputLibrary from './pages/CompanyOutputLibrary';
+import CompanyOnboarding from './pages/CompanyOnboarding';
+import CompanyAIAgents from './pages/CompanyAIAgents';
 
 // Create a custom theme based on the synthetic teams branding
 const theme = createTheme({
@@ -105,8 +114,22 @@ const App: React.FC = () => {
             
             {/* Protected routes - require both authentication and email verification */}
             <Route element={<VerifiedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/admin" element={<AdminPage />} />
+              <Route element={<DashboardLayout />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/billing" element={<Billing />} />
+                <Route path="/referrals" element={<Referrals />} />
+                
+                {/* Company specific routes */}
+                <Route path="/companies/:companyId">
+                  <Route path="team" element={<CompanyTeam />} />
+                  <Route path="data-sharing" element={<CompanyDataSharing />} />
+                  <Route path="output-library" element={<CompanyOutputLibrary />} />
+                  <Route path="onboarding" element={<CompanyOnboarding />} />
+                  <Route path="ai-agents" element={<CompanyAIAgents />} />
+                </Route>
+              </Route>
             </Route>
             
             {/* Default redirect */}

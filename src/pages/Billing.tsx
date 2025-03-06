@@ -1,0 +1,308 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Container,
+  Typography,
+  Paper,
+  Grid,
+  TextField,
+  Button,
+  Alert,
+  CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  alpha,
+  useTheme,
+} from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+
+interface BillingData {
+  form_of_payment: 'credit' | 'check' | 'wire_transfer';
+  payment_transferred: number;
+  payment_due: number;
+  payment_remaining: number;
+  payment_history: Array<{
+    payment_id: string;
+    form_of_payment: 'credit' | 'check' | 'wire_transfer';
+    date_processed: string;
+    total: number;
+    status: string;
+  }>;
+}
+
+// Currency formatter
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};
+
+const Billing: React.FC = () => {
+  const theme = useTheme();
+  const { getToken } = useAuth();
+  const [billingData, setBillingData] = useState<BillingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchBillingData();
+  }, []);
+
+  const fetchBillingData = async () => {
+    try {
+      console.log("Fetching billing data...");
+      const token = await getToken();
+      console.log("Got auth token");
+      
+      const response = await fetch('http://localhost:5001/api/account/billing', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log("Billing API response status:", response.status);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch billing data');
+      }
+
+      const data = await response.json();
+      console.log("Received billing data:", data);
+      setBillingData(data);
+    } catch (err: any) {
+      console.error("Error fetching billing data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaymentMethodUpdate = async (form_of_payment: 'credit' | 'check' | 'wire_transfer') => {
+    try {
+      const token = await getToken();
+      const response = await fetch('http://localhost:5001/api/account/billing', {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ form_of_payment })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update payment method');
+      }
+
+      const data = await response.json();
+      setBillingData(data);
+      setSuccess('Payment method updated successfully');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.message);
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  const handleAddPayment = async (total: number) => {
+    if (!billingData) return;
+    
+    try {
+      const token = await getToken();
+      const response = await fetch('http://localhost:5001/api/account/billing/payment', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          form_of_payment: billingData.form_of_payment,
+          total
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add payment');
+      }
+
+      const data = await response.json();
+      setBillingData(data);
+      setSuccess('Payment added successfully');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.message);
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #000000 0%, #121212 100%)',
+      py: 4
+    }}>
+      <Container maxWidth="lg">
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>
+        )}
+
+        <Typography variant="h4" sx={{ mb: 4, color: 'white' }}>
+          Billing & Payments
+        </Typography>
+
+        <Grid container spacing={3}>
+          {/* Payment Method Section */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ 
+              p: 3,
+              background: alpha('#111111', 0.7),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
+                Payment Method
+              </Typography>
+              <FormControl fullWidth>
+                <InputLabel>Form of Payment</InputLabel>
+                <Select
+                  value={billingData?.form_of_payment || 'credit'}
+                  onChange={(e) => handlePaymentMethodUpdate(e.target.value as 'credit' | 'check' | 'wire_transfer')}
+                >
+                  <MenuItem value="credit">Credit Card</MenuItem>
+                  <MenuItem value="check">Check</MenuItem>
+                  <MenuItem value="wire_transfer">Wire Transfer</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Bank Details Box */}
+              {(billingData?.form_of_payment === 'check' || billingData?.form_of_payment === 'wire_transfer') && (
+                <Box sx={{ 
+                  mt: 3,
+                  p: 2,
+                  borderRadius: 1,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: alpha(theme.palette.primary.main, 0.1),
+                }}>
+                  <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600, mb: 2 }}>
+                    Bank Details
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'white', mb: 1 }}>
+                    Synthetic Teams Inc.
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                    Account Number: <Box component="span" sx={{ color: 'white' }}>267441518433956</Box>
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                    Routing Number: <Box component="span" sx={{ color: 'white' }}>121145349</Box>
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Beneficiary Address: <Box component="span" sx={{ color: 'white' }}>6 St Johns Ln, New York, NY, 10013</Box>
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+
+          {/* Payment Summary Section */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ 
+              p: 3,
+              background: alpha('#111111', 0.7),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
+                Payment Summary
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="text.secondary">
+                    Payment Due: {formatCurrency(billingData?.payment_due || 0)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="text.secondary">
+                    Payment Transferred: {formatCurrency(billingData?.payment_transferred || 0)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="text.secondary">
+                    Payment Remaining: {formatCurrency(billingData?.payment_remaining || 0)}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* Payment History Section */}
+          <Grid item xs={12}>
+            <Paper sx={{ 
+              p: 3,
+              background: alpha('#111111', 0.7),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
+                Payment History
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>ID</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Form of Payment</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell align="right">Total</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {billingData?.payment_history.map((payment, index) => (
+                      <TableRow key={payment.payment_id}>
+                        <TableCell>{payment.payment_id}</TableCell>
+                        <TableCell>{new Date(payment.date_processed).toLocaleDateString()}</TableCell>
+                        <TableCell>{payment.form_of_payment}</TableCell>
+                        <TableCell>{payment.status || 'processing'}</TableCell>
+                        <TableCell align="right">{formatCurrency(payment.total)}</TableCell>
+                      </TableRow>
+                    ))}
+                    {(!billingData?.payment_history || billingData.payment_history.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">No payment history available</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+};
+
+export default Billing; 
+

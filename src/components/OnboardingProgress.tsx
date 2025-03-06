@@ -55,8 +55,8 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPh
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
-  const [expandedPhases, setExpandedPhases] = useState<number[]>([]);
+  const [selectedPhase, setSelectedPhase] = useState<number | null>(0);
+  const [expandedPhases, setExpandedPhases] = useState<number[]>([0]);
   const { getToken } = useAuth();
   const theme = useTheme();
   
@@ -185,6 +185,15 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPh
     ];
   };
   
+  const phases = groupStepsByPhase();
+
+  // Select first phase by default
+  useEffect(() => {
+    if (phases.length > 0 && !loading && !error) {
+      onPhaseSelect(phases[0].name, phases[0].steps);
+    }
+  }, [loading, error]);
+
   if (loading) {
     return (
       <Box sx={{ 
@@ -206,8 +215,6 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPh
     );
   }
 
-  const phases = groupStepsByPhase();
-  
   const handlePhaseClick = (phase: OnboardingPhase, phaseIndex: number) => {
     // Toggle expansion
     setExpandedPhases(prev => {

@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
 import { Box, List, ListItemButton, ListItemText, CircularProgress, alpha, useTheme, Collapse, IconButton } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   BuildingOffice2Icon, 
   Cog6ToothIcon,
-  ChartBarIcon,
+  UserIcon,
   CreditCardIcon,
-  DocumentTextIcon,
+  GiftIcon,
   UserGroupIcon,
   CalendarIcon,
   ChatBubbleLeftIcon,
   ClipboardDocumentListIcon,
-  BriefcaseIcon,
   RectangleStackIcon,
-  ArrowPathIcon,
-  BellIcon
+  BellIcon,
+  ChartBarIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
 interface SideMenuProps {
   onboardingProgress?: number;
   companies: Company[];
+  selectedCompany: string | null;
+  setSelectedCompany: (id: string | null) => void;
 }
 
 interface Company {
@@ -29,7 +31,12 @@ interface Company {
   created_at: string;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies = [] }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ 
+  onboardingProgress = 63, 
+  companies = [], 
+  selectedCompany,
+  setSelectedCompany 
+}) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
@@ -40,8 +47,22 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
   const displayName = currentUser?.email?.split('@')[0] || 'User';
   const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
 
-  // Get the first company for display (if any)
-  const firstCompany = companies[0];
+  // Get the current company
+  const currentCompany = companies.find(c => c.id === selectedCompany) || companies[0];
+
+  // Handle company selection
+  const handleCompanySelect = (company: Company) => {
+    setSelectedCompany(company.id);
+    setCompanyMenuOpen(false);
+    navigate(`/companies/${company.id}/team`);
+  };
+
+  // Navigation helper for company pages
+  const navigateToCompanyPage = (page: string) => {
+    if (currentCompany) {
+      navigate(`/companies/${currentCompany.id}/${page}`);
+    }
+  };
 
   return (
     <Box
@@ -59,7 +80,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
       <List component="nav" sx={{ p: 1.5 }}>
         {/* Setup Section */}
         <ListItemButton
-          onClick={() => navigate('/setup')}
+          onClick={() => navigate('/dashboard')}
           sx={{
             borderRadius: '6px',
             mb: 0.5,
@@ -240,7 +261,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
         {/* Navigation Links */}
         <Box sx={{ mt: 2 }}>
           <ListItemButton
-            onClick={() => navigate('/metrics')}
+            onClick={() => navigate('/account')}
             sx={{
               borderRadius: '6px',
               py: 1,
@@ -254,7 +275,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
             }}
           >
             <Box 
-              component={ChartBarIcon}
+              component={UserIcon}
               sx={{ 
                 width: 18,
                 height: 18,
@@ -264,7 +285,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
               }}
             />
             <ListItemText 
-              primary="Metrics"
+              primary="Account"
               sx={{
                 m: 0,
                 '& .MuiListItemText-primary': {
@@ -279,7 +300,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
             onClick={() => navigate('/billing')}
             sx={{
               borderRadius: '6px',
-              py: 0,
+              py: 1,
               px: 1.5,
               mb: 0.5,
               display: 'flex',
@@ -312,7 +333,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
           </ListItemButton>
 
           <ListItemButton
-            onClick={() => navigate('/documents')}
+            onClick={() => navigate('/referrals')}
             sx={{
               borderRadius: '6px',
               py: 1,
@@ -326,7 +347,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
             }}
           >
             <Box 
-              component={DocumentTextIcon}
+              component={GiftIcon}
               sx={{ 
                 width: 18,
                 height: 18,
@@ -336,7 +357,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
               }}
             />
             <ListItemText 
-              primary="Documents"
+              primary="Referrals"
               sx={{
                 m: 0,
                 '& .MuiListItemText-primary': {
@@ -365,7 +386,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
             }}
           >
             <ListItemText
-              primary={firstCompany?.name || 'No Company'}
+              primary={currentCompany?.name || 'No Company'}
               sx={{
                 m: 0,
                 '& .MuiListItemText-primary': {
@@ -411,15 +432,19 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
                 {companies.map((company) => (
                   <ListItemButton
                     key={company.id}
-                    onClick={() => {
-                      // Handle company selection
-                      setCompanyMenuOpen(false);
-                    }}
+                    onClick={() => handleCompanySelect(company)}
+                    selected={company.id === selectedCompany}
                     sx={{
                       py: 1,
                       px: 1.5,
                       '&:hover': {
                         backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.15),
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                        },
                       },
                     }}
                   >
@@ -440,271 +465,145 @@ const SideMenu: React.FC<SideMenuProps> = ({ onboardingProgress = 63, companies 
           </Collapse>
 
           {/* Company Submenu Items */}
-          <List component="div" disablePadding sx={{ mt: 0.5 }}>
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={UserGroupIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Team Members"
+          {currentCompany && (
+            <List component="div" disablePadding sx={{ mt: 0.5 }}>
+              <ListItemButton
+                onClick={() => navigateToCompanyPage('team')}
                 sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
+                  borderRadius: '6px',
+                  py: 1,
+                  px: 1.5,
+                  mb: 0.5,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                 }}
-              />
-            </ListItemButton>
+              >
+                <Box 
+                  component={UserGroupIcon}
+                  sx={{ 
+                    width: 18,
+                    height: 18,
+                    color: 'text.secondary',
+                    mr: 1.5,
+                    opacity: 0.7,
+                  }}
+                />
+                <ListItemText 
+                  primary="Team Members"
+                  sx={{
+                    m: 0,
+                    '& .MuiListItemText-primary': {
+                      fontSize: 14,
+                      fontWeight: 500,
+                    },
+                  }}
+                />
+              </ListItemButton>
 
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={CalendarIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Schedule"
+              <ListItemButton
+                onClick={() => navigateToCompanyPage('data-sharing')}
                 sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
+                  borderRadius: '6px',
+                  py: 1,
+                  px: 1.5,
+                  mb: 0.5,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                 }}
-              />
-            </ListItemButton>
+              >
+                <Box 
+                  component={CalendarIcon}
+                  sx={{ 
+                    width: 18,
+                    height: 18,
+                    color: 'text.secondary',
+                    mr: 1.5,
+                    opacity: 0.7,
+                  }}
+                />
+                <ListItemText 
+                  primary="Data Sharing"
+                  sx={{
+                    m: 0,
+                    '& .MuiListItemText-primary': {
+                      fontSize: 14,
+                      fontWeight: 500,
+                    },
+                  }}
+                />
+              </ListItemButton>
 
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={ChatBubbleLeftIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Messages"
+              <ListItemButton
+                onClick={() => navigateToCompanyPage('output-library')}
                 sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
+                  borderRadius: '6px',
+                  py: 1,
+                  px: 1.5,
+                  mb: 0.5,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                 }}
-              />
-            </ListItemButton>
+              >
+                <Box 
+                  component={ClipboardDocumentListIcon}
+                  sx={{ 
+                    width: 18,
+                    height: 18,
+                    color: 'text.secondary',
+                    mr: 1.5,
+                    opacity: 0.7,
+                  }}
+                />
+                <ListItemText 
+                  primary="Output Library"
+                  sx={{
+                    m: 0,
+                    '& .MuiListItemText-primary': {
+                      fontSize: 14,
+                      fontWeight: 500,
+                    },
+                  }}
+                />
+              </ListItemButton>
 
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={ClipboardDocumentListIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Tasks"
+              <ListItemButton
+                onClick={() => navigateToCompanyPage('ai-agents')}
                 sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
+                  borderRadius: '6px',
+                  py: 1,
+                  px: 1.5,
+                  mb: 0.5,
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                 }}
-              />
-            </ListItemButton>
-
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={BriefcaseIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Projects"
-                sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
-                  },
-                }}
-              />
-            </ListItemButton>
-
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={RectangleStackIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Resources"
-                sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
-                  },
-                }}
-              />
-            </ListItemButton>
-
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={ArrowPathIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Activity"
-                sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
-                  },
-                }}
-              />
-            </ListItemButton>
-
-            <ListItemButton
-              sx={{
-                borderRadius: '6px',
-                py: 1,
-                px: 1.5,
-                mb: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Box 
-                component={BellIcon}
-                sx={{ 
-                  width: 18,
-                  height: 18,
-                  color: 'text.secondary',
-                  mr: 1.5,
-                  opacity: 0.7,
-                }}
-              />
-              <ListItemText 
-                primary="Notifications"
-                sx={{
-                  m: 0,
-                  '& .MuiListItemText-primary': {
-                    fontSize: 14,
-                    fontWeight: 500,
-                  },
-                }}
-              />
-            </ListItemButton>
-          </List>
+              >
+                <Box 
+                  component={SparklesIcon}
+                  sx={{ 
+                    width: 18,
+                    height: 18,
+                    color: 'text.secondary',
+                    mr: 1.5,
+                    opacity: 0.7,
+                  }}
+                />
+                <ListItemText 
+                  primary="AI Agents"
+                  sx={{
+                    m: 0,
+                    '& .MuiListItemText-primary': {
+                      fontSize: 14,
+                      fontWeight: 500,
+                    },
+                  }}
+                />
+              </ListItemButton>
+            </List>
+          )}
         </Box>
       </List>
     </Box>
