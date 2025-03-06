@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "dashboard-55056"
+  },
+  "targets": {
+    "dashboard-55056": {
+      "hosting": {
+        "dashboard-55056": [
+          "dashboard-55056"
+        ],
+        "app-syntheticteams": [
+          "app-syntheticteams"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

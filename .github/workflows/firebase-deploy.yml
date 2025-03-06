@@ -37,10 +37,20 @@ jobs:
           REACT_APP_FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
           REACT_APP_AUTH_MODE: firebase
           
-      - name: Deploy to Firebase
+      - name: Deploy to default site
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           channelId: live
-          projectId: dashboard-55056 
+          projectId: dashboard-55056
+          target: dashboard-55056
+          
+      - name: Deploy to app.syntheticteams.com
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: dashboard-55056
+          target: app-syntheticteams 
