@@ -151,7 +151,7 @@ const Login: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Box 
                   component="img" 
-                  src="/synthetic-teams-logo.svg" 
+                  src="/logo.svg" 
                   alt="Synthetic Teams"
                   sx={{ 
                     width: '180px',
@@ -163,7 +163,7 @@ const Login: React.FC = () => {
               </Box>
 
               <LoginPaper elevation={0}>
-                <Typography component="h1">
+                <Typography component="h1" sx={{ color: 'white' }}>
                   {tabValue === 0 ? 'Sign in to your account' : 'Create your account'}
                 </Typography>
 
@@ -175,11 +175,18 @@ const Login: React.FC = () => {
                   variant="fullWidth" 
                   sx={{ 
                     borderBottom: 1, 
-                    borderColor: 'divider',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
                     mb: 3,
                     '& .MuiTab-root': {
                       fontWeight: 600,
                       fontSize: '0.9rem',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                    },
+                    '& .Mui-selected': {
+                      color: 'white',
+                    },
+                    '& .MuiTabs-indicator': {
+                      backgroundColor: theme.palette.primary.main,
                     }
                   }}
                 >

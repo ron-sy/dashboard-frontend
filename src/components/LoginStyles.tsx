@@ -5,7 +5,7 @@ export const LoginContainer = styled(Box)(({ theme }) => ({
   height: '100vh',
   display: 'flex',
   position: 'relative',
-  backgroundColor: '#FFFFFF',
+  backgroundColor: '#000000',
   flexDirection: 'column',
   overflow: 'hidden'
 }));
@@ -135,68 +135,46 @@ export const LoginPaper = styled(Paper)(({ theme }) => ({
   width: '100%',
   maxWidth: '448px',
   padding: '24px',
-  background: '#FFFFFF',
-  boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06)',
+  background: 'rgba(17, 17, 17, 0.7)',
+  backdropFilter: 'blur(10px)',
+  boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 2px rgba(0, 0, 0, 0.2)',
   borderRadius: '8px',
-  border: '1px solid #E5E7EB',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
   marginBottom: '16px',
   transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
   '&:hover': {
-    boxShadow: '0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    borderColor: '#D1D5DB'
+    boxShadow: '0px 4px 6px -1px rgba(0, 0, 0, 0.3), 0px 2px 4px -1px rgba(0, 0, 0, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.2)'
   },
   '& > h1': {
     fontSize: '20px',
     lineHeight: '20px',
     fontWeight: 600,
     marginBottom: '24px',
-    color: '#111827'
+    color: '#FFFFFF'
   }
 }));
 
 export const StyledTextField = styled(TextField)(({ theme }) => ({
   marginBottom: '16px',
   '& .MuiOutlinedInput-root': {
-    borderRadius: '6px',
-    backgroundColor: '#FFFFFF',
-    transition: 'all 0.15s ease',
-    height: '40px',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     '& fieldset': {
-      borderColor: '#D1D5DB',
-      borderWidth: '1px',
-      transition: 'border-color 0.15s ease'
+      borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     '&:hover fieldset': {
-      borderColor: '#9CA3AF',
+      borderColor: 'rgba(255, 255, 255, 0.2)',
     },
-    '&.Mui-focused': {
-      '& fieldset': {
-        borderColor: theme.palette.primary.main,
-        borderWidth: '2px'
-      }
-    }
+    '&.Mui-focused fieldset': {
+      borderColor: theme.palette.primary.main,
+    },
   },
   '& .MuiInputLabel-root': {
-    color: '#6B7280',
-    fontSize: '14px',
-    transform: 'translate(14px, 12px) scale(1)',
-    '&.Mui-focused': {
-      color: theme.palette.primary.main,
-    },
-    '&.MuiInputLabel-shrink': {
-      transform: 'translate(14px, -9px) scale(0.75)',
-    }
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   '& .MuiInputBase-input': {
-    padding: '10px 14px',
-    fontSize: '14px',
-    lineHeight: '20px',
-    color: '#111827',
-    '&::placeholder': {
-      color: '#9CA3AF',
-      opacity: 1
-    }
-  }
+    color: 'white',
+  },
 }));
 
 export const SocialButton = styled(Button)(({ theme }) => ({
@@ -251,14 +229,13 @@ export const Divider = styled('div')(({ theme }) => ({
 
 export const FooterText = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
-  color: '#6B7280',
-  fontSize: '14px',
+  marginTop: '16px',
+  color: 'rgba(255, 255, 255, 0.7)',
   '& a': {
     color: theme.palette.primary.main,
     textDecoration: 'none',
-    fontWeight: 500,
     '&:hover': {
-      textDecoration: 'underline'
-    }
-  }
+      textDecoration: 'underline',
+    },
+  },
 })); 
