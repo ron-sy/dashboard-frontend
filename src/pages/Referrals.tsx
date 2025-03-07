@@ -39,6 +39,7 @@ const Referrals: React.FC = () => {
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
 
   useEffect(() => {
     fetchReferralData();
@@ -68,7 +69,11 @@ const Referrals: React.FC = () => {
   };
 
   const handleContactRep = () => {
-    window.location.href = 'mailto:support@syntheticteams.com?subject=Referral Program Inquiry';
+    navigator.clipboard.writeText('sales@syntheticteams.com');
+    setShowCopyConfirmation(true);
+    setTimeout(() => {
+      setShowCopyConfirmation(false);
+    }, 3000);
   };
 
   if (loading) {
@@ -103,8 +108,13 @@ const Referrals: React.FC = () => {
             onClick={handleContactRep}
             startIcon={<Box component={PhoneIcon} sx={{ width: 20, height: 20 }} />}
           >
-            Contact Your Rep
+            Contact Sales
           </AnimatedGradientButton>
+          {showCopyConfirmation && (
+            <Alert severity="success" sx={{ mt: 1, position: 'absolute', zIndex: 1000, width: '300px' }}>
+              Email copied to clipboard: sales@syntheticteams.com
+            </Alert>
+          )}
         </Box>
 
         <Grid container spacing={3}>

@@ -98,6 +98,10 @@ const Billing: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
 
   // Fetch companies first
   useEffect(() => {
@@ -252,6 +256,14 @@ const Billing: React.FC = () => {
     }
   };
 
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('sales@syntheticteams.com');
+    setShowCopyConfirmation(true);
+    setTimeout(() => {
+      setShowCopyConfirmation(false);
+    }, 3000);
+  };
+
   if (loading && !companies.length) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
@@ -381,9 +393,9 @@ const Billing: React.FC = () => {
                           variant="contained"
                           fullWidth
                           sx={{ mt: 2, backgroundColor: theme.palette.primary.main }}
-                          onClick={() => window.location.href = 'mailto:sales@syntheticteams.com?subject=Pro Plan Inquiry'}
+                          onClick={handleCopyEmail}
                         >
-                          Contact your rep
+                          Contact Sales
                         </Button>
                       ) : tier.comingSoon ? (
                         <Tooltip title="This tier will be available soon">
@@ -550,6 +562,20 @@ const Billing: React.FC = () => {
           </Grid>
         )}
       </Container>
+      {showCopyConfirmation && (
+        <Alert 
+          severity="success" 
+          sx={{ 
+            position: 'fixed', 
+            bottom: 20, 
+            right: 20, 
+            zIndex: 1000,
+            width: '300px'
+          }}
+        >
+          Email copied to clipboard: sales@syntheticteams.com
+        </Alert>
+      )}
     </Box>
   );
 };
