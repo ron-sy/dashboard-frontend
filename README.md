@@ -62,3 +62,4 @@ Last updated: 2025-03-06 17:35 - Testing with ESLint warnings ignored
 - Added Calendly integration for training sessions
 - Fixed external link handling
 - Updated billing tier layout
+- Updated Firebase deployment tokens
