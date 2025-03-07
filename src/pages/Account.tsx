@@ -19,6 +19,8 @@ import {
   FormControl,
   alpha,
   useTheme,
+  IconButton,
+  Stack,
 } from '@mui/material';
 import {
   CameraIcon,
@@ -27,6 +29,9 @@ import {
   GlobeAltIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { useAuth } from '../context/AuthContext';
 
 interface Profile {
@@ -85,9 +90,11 @@ const Account: React.FC = () => {
   const theme = useTheme();
   const { currentUser, getToken } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [editedProfile, setEditedProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -99,7 +106,7 @@ const Account: React.FC = () => {
       const token = await getToken();
       console.log("Got auth token");
       
-      const response = await fetch('http://localhost:5001/api/account/profile', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/account/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -114,6 +121,7 @@ const Account: React.FC = () => {
       const data = await response.json();
       console.log("Received profile data:", data);
       setProfile(data);
+      setEditedProfile(data);
       console.log("Profile state after update:", data);
     } catch (err: any) {
       console.error("Error fetching profile:", err);
@@ -123,97 +131,62 @@ const Account: React.FC = () => {
     }
   };
 
-  const handleProfileUpdate = async (updates: Partial<Profile>) => {
-    if (!profile) return;
+  const handleStartEditing = () => {
+    setIsEditing(true);
+    setEditedProfile(profile);
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditing(false);
+    setEditedProfile(profile);
+    setError(null);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editedProfile) return;
 
     try {
+      setError(null);
       const token = await getToken();
-      const response = await fetch('http://localhost:5001/api/account/profile', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/account/profile`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(updates)
+        body: JSON.stringify(editedProfile)
       });
 
       if (!response.ok) {
         throw new Error('Failed to update profile');
       }
 
-      setProfile({ ...profile, ...updates });
+      setProfile(editedProfile);
       setSuccess('Profile updated successfully');
+      setIsEditing(false);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
       setError(err.message);
-      setTimeout(() => setError(null), 3000);
     }
   };
 
-  const updateDisplayName = (value: string) => {
-    handleProfileUpdate({ display_name: value });
-  };
-
-  const updateProfileField = (field: keyof Profile['profile'], value: any) => {
-    if (!profile) return;
-    handleProfileUpdate({
-      profile: {
-        ...profile.profile,
-        [field]: value
+  const updateEditedProfile = (field: string, value: any) => {
+    if (!editedProfile) return;
+    
+    const fieldParts = field.split('.');
+    let updatedProfile = { ...editedProfile } as any;
+    
+    if (fieldParts.length === 1) {
+      updatedProfile[field] = value;
+    } else {
+      let current = updatedProfile;
+      for (let i = 0; i < fieldParts.length - 1; i++) {
+        current = current[fieldParts[i]];
       }
-    });
-  };
-
-  const updateBusinessAddress = (field: keyof BusinessAddress, value: string | null) => {
-    if (!profile) return;
-    handleProfileUpdate({
-      profile: {
-        ...profile.profile,
-        business_address: {
-          ...profile.profile.business_address,
-          [field]: value
-        }
-      }
-    });
-  };
-
-  const updateNotificationPreferences = (field: keyof NotificationPreferences, value: boolean) => {
-    if (!profile) return;
-    handleProfileUpdate({
-      profile: {
-        ...profile.profile,
-        notification_preferences: {
-          ...profile.profile.notification_preferences,
-          [field]: value
-        }
-      }
-    });
-  };
-
-  const updateSystemPreferences = (field: keyof SystemPreferences, value: any) => {
-    if (!profile) return;
-    handleProfileUpdate({
-      profile: {
-        ...profile.profile,
-        system_preferences: {
-          ...profile.profile.system_preferences,
-          [field]: value
-        }
-      }
-    });
-  };
-
-  const updateSecurity = (field: keyof SecuritySettings, value: boolean) => {
-    if (!profile) return;
-    handleProfileUpdate({
-      profile: {
-        ...profile.profile,
-        security: {
-          ...profile.profile.security,
-          [field]: value
-        }
-      }
-    });
+      current[fieldParts[fieldParts.length - 1]] = value;
+    }
+    
+    setEditedProfile(updatedProfile as Profile);
   };
 
   if (loading) {
@@ -238,9 +211,45 @@ const Account: React.FC = () => {
           <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>
         )}
 
-        <Typography variant="h4" sx={{ mb: 4, color: 'white' }}>
-          Account Settings
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Typography variant="h4" sx={{ color: 'white' }}>
+            Account Settings
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            {!isEditing ? (
+              <IconButton 
+                onClick={handleStartEditing}
+                sx={{ 
+                  color: theme.palette.primary.main,
+                  '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.1) }
+                }}
+              >
+                <EditIcon />
+              </IconButton>
+            ) : (
+              <>
+                <IconButton 
+                  onClick={handleSaveProfile}
+                  sx={{ 
+                    color: theme.palette.success.main,
+                    '&:hover': { backgroundColor: alpha(theme.palette.success.main, 0.1) }
+                  }}
+                >
+                  <SaveIcon />
+                </IconButton>
+                <IconButton 
+                  onClick={handleCancelEditing}
+                  sx={{ 
+                    color: theme.palette.error.main,
+                    '&:hover': { backgroundColor: alpha(theme.palette.error.main, 0.1) }
+                  }}
+                >
+                  <CancelIcon />
+                </IconButton>
+              </>
+            )}
+          </Stack>
+        </Box>
 
         <Grid container spacing={3}>
           {/* Profile Section */}
@@ -249,246 +258,185 @@ const Account: React.FC = () => {
               p: 3, 
               background: alpha('#111111', 0.7),
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              border: '1px solid rgba(255, 255, 255, 0.05)'
             }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar 
-                  src={profile?.profile.avatar_url || undefined}
-                  sx={{ width: 64, height: 64, mr: 2 }}
+              <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
+                Profile Information
+              </Typography>
+              
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  fullWidth
+                  label="Display Name"
+                  value={isEditing ? editedProfile?.display_name : profile?.display_name}
+                  onChange={(e) => updateEditedProfile('display_name', e.target.value)}
+                  disabled={!isEditing}
+                  sx={{ mb: 2 }}
                 />
-                <Box>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Box component={CameraIcon} sx={{ width: 20 }} />}
-                    sx={{ 
-                      color: 'white',
-                      borderColor: 'rgba(255, 255, 255, 0.23)'
-                    }}
-                  >
-                    Change Photo
-                  </Button>
-                </Box>
+                <TextField
+                  fullWidth
+                  label="Job Title"
+                  value={isEditing ? editedProfile?.profile.job_title : profile?.profile.job_title}
+                  onChange={(e) => updateEditedProfile('profile.job_title', e.target.value)}
+                  disabled={!isEditing}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Department"
+                  value={isEditing ? editedProfile?.profile.department : profile?.profile.department}
+                  onChange={(e) => updateEditedProfile('profile.department', e.target.value)}
+                  disabled={!isEditing}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  value={isEditing ? editedProfile?.profile.phone : profile?.profile.phone}
+                  onChange={(e) => updateEditedProfile('profile.phone', e.target.value)}
+                  disabled={!isEditing}
+                />
               </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Display Name"
-                    value={profile?.display_name || ''}
-                    onChange={(e) => updateDisplayName(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Job Title"
-                    value={profile?.profile.job_title || ''}
-                    onChange={(e) => updateProfileField('job_title', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Department"
-                    value={profile?.profile.department || ''}
-                    onChange={(e) => updateProfileField('department', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Phone"
-                    value={profile?.profile.phone || ''}
-                    onChange={(e) => updateProfileField('phone', e.target.value)}
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
-
-          {/* Business Address */}
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ 
-              p: 3,
-              background: alpha('#111111', 0.7),
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, color: 'white' }}>
                 Business Address
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Street Address"
-                    value={profile?.profile.business_address.street || ''}
-                    onChange={(e) => updateBusinessAddress('street', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="City"
-                    value={profile?.profile.business_address.city || ''}
-                    onChange={(e) => updateBusinessAddress('city', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="State/Province"
-                    value={profile?.profile.business_address.state || ''}
-                    onChange={(e) => updateBusinessAddress('state', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Postal Code"
-                    value={profile?.profile.business_address.postal_code || ''}
-                    onChange={(e) => updateBusinessAddress('postal_code', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Country"
-                    value={profile?.profile.business_address.country || ''}
-                    onChange={(e) => updateBusinessAddress('country', e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  fullWidth
+                  label="Street"
+                  value={isEditing ? editedProfile?.profile.business_address.street : profile?.profile.business_address.street}
+                  onChange={(e) => updateEditedProfile('profile.business_address.street', e.target.value)}
+                  disabled={!isEditing}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="City"
+                  value={isEditing ? editedProfile?.profile.business_address.city : profile?.profile.business_address.city}
+                  onChange={(e) => updateEditedProfile('profile.business_address.city', e.target.value)}
+                  disabled={!isEditing}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="State"
+                  value={isEditing ? editedProfile?.profile.business_address.state : profile?.profile.business_address.state}
+                  onChange={(e) => updateEditedProfile('profile.business_address.state', e.target.value)}
+                  disabled={!isEditing}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Postal Code"
+                  value={isEditing ? editedProfile?.profile.business_address.postal_code : profile?.profile.business_address.postal_code}
+                  onChange={(e) => updateEditedProfile('profile.business_address.postal_code', e.target.value)}
+                  disabled={!isEditing}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Country"
+                  value={isEditing ? editedProfile?.profile.business_address.country : profile?.profile.business_address.country}
+                  onChange={(e) => updateEditedProfile('profile.business_address.country', e.target.value)}
+                  disabled={!isEditing}
+                />
+              </Box>
             </Paper>
           </Grid>
 
-          {/* System Preferences */}
+          {/* Preferences Section */}
           <Grid item xs={12} md={6}>
             <Paper sx={{ 
-              p: 3,
+              p: 3, 
               background: alpha('#111111', 0.7),
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              border: '1px solid rgba(255, 255, 255, 0.05)'
             }}>
               <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
-                System Preferences
+                Preferences
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Theme</InputLabel>
-                    <Select
-                      value={profile?.profile.system_preferences.theme || 'system'}
-                      onChange={(e) => updateSystemPreferences('theme', e.target.value)}
-                    >
-                      <MenuItem value="light">Light</MenuItem>
-                      <MenuItem value="dark">Dark</MenuItem>
-                      <MenuItem value="system">System</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Time Format</InputLabel>
-                    <Select
-                      value={profile?.profile.system_preferences.time_format || '24h'}
-                      onChange={(e) => updateSystemPreferences('time_format', e.target.value)}
-                    >
-                      <MenuItem value="12h">12-hour</MenuItem>
-                      <MenuItem value="24h">24-hour</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
 
-          {/* Notifications */}
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ 
-              p: 3,
-              background: alpha('#111111', 0.7),
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
+              <Box sx={{ mb: 3 }}>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Theme</InputLabel>
+                  <Select
+                    value={isEditing ? editedProfile?.profile.system_preferences.theme : profile?.profile.system_preferences.theme}
+                    onChange={(e) => updateEditedProfile('profile.system_preferences.theme', e.target.value)}
+                    disabled={!isEditing}
+                    label="Theme"
+                  >
+                    <MenuItem value="light">Light</MenuItem>
+                    <MenuItem value="dark">Dark</MenuItem>
+                    <MenuItem value="system">System</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Time Format</InputLabel>
+                  <Select
+                    value={isEditing ? editedProfile?.profile.system_preferences.time_format : profile?.profile.system_preferences.time_format}
+                    onChange={(e) => updateEditedProfile('profile.system_preferences.time_format', e.target.value)}
+                    disabled={!isEditing}
+                    label="Time Format"
+                  >
+                    <MenuItem value="12h">12 Hour</MenuItem>
+                    <MenuItem value="24h">24 Hour</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>Language</InputLabel>
+                  <Select
+                    value={isEditing ? editedProfile?.profile.language_preference : profile?.profile.language_preference}
+                    onChange={(e) => updateEditedProfile('profile.language_preference', e.target.value)}
+                    disabled={!isEditing}
+                    label="Language"
+                  >
+                    <MenuItem value="en">English</MenuItem>
+                    <MenuItem value="es">Spanish</MenuItem>
+                    <MenuItem value="fr">French</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <Typography variant="subtitle1" sx={{ mb: 2, color: 'white' }}>
                 Notification Preferences
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={profile?.profile.notification_preferences.email_notifications || false}
-                        onChange={(e) => updateNotificationPreferences('email_notifications', e.target.checked)}
-                      />
-                    }
-                    label="Email Notifications"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={profile?.profile.notification_preferences.desktop_notifications || false}
-                        onChange={(e) => updateNotificationPreferences('desktop_notifications', e.target.checked)}
-                      />
-                    }
-                    label="Desktop Notifications"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={profile?.profile.notification_preferences.mobile_notifications || false}
-                        onChange={(e) => updateNotificationPreferences('mobile_notifications', e.target.checked)}
-                      />
-                    }
-                    label="Mobile Notifications"
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
 
-          {/* Security */}
-          <Grid item xs={12}>
-            <Paper sx={{ 
-              p: 3,
-              background: alpha('#111111', 0.7),
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
-                Security Settings
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={profile?.profile.security.two_factor_enabled || false}
-                        onChange={(e) => updateSecurity('two_factor_enabled', e.target.checked)}
-                      />
-                    }
-                    label="Two-Factor Authentication"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Box component={KeyIcon} sx={{ width: 20 }} />}
-                    sx={{ 
-                      color: 'white',
-                      borderColor: 'rgba(255, 255, 255, 0.23)'
-                    }}
-                  >
-                    Change Password
-                  </Button>
-                </Grid>
-              </Grid>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isEditing ? editedProfile?.profile.notification_preferences.email_notifications : profile?.profile.notification_preferences.email_notifications}
+                      onChange={(e) => updateEditedProfile('profile.notification_preferences.email_notifications', e.target.checked)}
+                      disabled={!isEditing}
+                    />
+                  }
+                  label="Email Notifications"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isEditing ? editedProfile?.profile.notification_preferences.desktop_notifications : profile?.profile.notification_preferences.desktop_notifications}
+                      onChange={(e) => updateEditedProfile('profile.notification_preferences.desktop_notifications', e.target.checked)}
+                      disabled={!isEditing}
+                    />
+                  }
+                  label="Desktop Notifications"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isEditing ? editedProfile?.profile.notification_preferences.mobile_notifications : profile?.profile.notification_preferences.mobile_notifications}
+                      onChange={(e) => updateEditedProfile('profile.notification_preferences.mobile_notifications', e.target.checked)}
+                      disabled={!isEditing}
+                    />
+                  }
+                  label="Mobile Notifications"
+                />
+              </Box>
             </Paper>
           </Grid>
         </Grid>

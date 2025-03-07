@@ -12,15 +12,19 @@ import {
   TableHead,
   TableRow,
   alpha,
-  useTheme
+  useTheme,
+  Avatar,
+  Stack
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 interface TeamMember {
-  user_id: string;
+  id: string;
+  email: string;
+  display_name: string;
   role: string;
-  joined_at: string;
+  created_at: string;
 }
 
 const CompanyTeam: React.FC = () => {
@@ -41,7 +45,7 @@ const CompanyTeam: React.FC = () => {
           throw new Error('Authentication required');
         }
         
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/companies/${companyId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/companies/${companyId}/users`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -52,7 +56,7 @@ const CompanyTeam: React.FC = () => {
         }
         
         const data = await response.json();
-        setTeamMembers(data.team_members || []);
+        setTeamMembers(data);
       } catch (err: any) {
         setError(err.message || 'An error occurred');
         console.error('Error fetching team members:', err);
@@ -84,7 +88,7 @@ const CompanyTeam: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+      <Typography variant="h4" sx={{ mb: 3, color: 'white' }}>
         Team Members
       </Typography>
       
@@ -100,19 +104,47 @@ const CompanyTeam: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>User ID</TableCell>
+                <TableCell>User</TableCell>
                 <TableCell>Role</TableCell>
                 <TableCell>Joined</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {teamMembers.map((member) => (
-                <TableRow key={member.user_id}>
-                  <TableCell>{member.user_id}</TableCell>
+                <TableRow key={member.id}>
+                  <TableCell>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar 
+                        sx={{ 
+                          width: 32, 
+                          height: 32,
+                          bgcolor: theme.palette.primary.main,
+                          fontSize: '1rem'
+                        }}
+                      >
+                        {member.display_name?.charAt(0) || member.email.charAt(0)}
+                      </Avatar>
+                      <Stack>
+                        <Typography variant="body2">
+                          {member.display_name || 'Unnamed User'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {member.email}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </TableCell>
                   <TableCell sx={{ textTransform: 'capitalize' }}>{member.role}</TableCell>
-                  <TableCell>{new Date(member.joined_at).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(member.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
+              {teamMembers.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    No team members found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>

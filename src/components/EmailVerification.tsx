@@ -2,19 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
-  Paper, 
-  Button, 
-  CircularProgress, 
-  Alert,
-  alpha,
+  Button,
+  CircularProgress,
   useTheme,
-  Container
+  useMediaQuery,
+  IconButton
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import EmailIcon from '@mui/icons-material/Email';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ParticleField from './ParticleField';
+import AnimatedGradientButton from './AnimatedGradientButton';
+import {
+  LoginContainer,
+  MainContent,
+  LoginSection,
+  LoginContent,
+  LoginFooter,
+  LoginFooterLinks,
+  LoginFooterLink,
+  Copyright,
+  GraphicSection,
+  LoginPaper,
+  ErrorAlert,
+  OverlayText
+} from './LoginStyles';
 
 const EmailVerification: React.FC = () => {
   const { currentUser, logout, sendEmailVerification } = useAuth();
@@ -22,8 +36,21 @@ const EmailVerification: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [countdown, setCountdown] = useState(0);
+  const [particleCount, setParticleCount] = useState(80);
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  useEffect(() => {
+    if (isSmallScreen) {
+      setParticleCount(40);
+    } else if (isMobile) {
+      setParticleCount(60);
+    } else {
+      setParticleCount(80);
+    }
+  }, [isMobile, isSmallScreen]);
 
   // Check if email is verified every 5 seconds
   useEffect(() => {
@@ -31,9 +58,7 @@ const EmailVerification: React.FC = () => {
 
     const checkEmailVerified = async () => {
       try {
-        // Force refresh the token to get the latest user data
         await currentUser.reload();
-        
         if (currentUser.emailVerified) {
           navigate('/dashboard');
         }
@@ -49,11 +74,7 @@ const EmailVerification: React.FC = () => {
   // Countdown timer for resend button
   useEffect(() => {
     if (countdown <= 0) return;
-    
-    const timer = setTimeout(() => {
-      setCountdown(countdown - 1);
-    }, 1000);
-    
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown]);
 
@@ -66,9 +87,8 @@ const EmailVerification: React.FC = () => {
       setSuccess('');
       
       await sendEmailVerification();
-      
       setSuccess('Verification email sent! Please check your inbox.');
-      setCountdown(60); // Set a 60-second countdown
+      setCountdown(60);
     } catch (err: any) {
       setError('Failed to send verification email: ' + (err.message || 'Unknown error'));
     } finally {
@@ -87,146 +107,131 @@ const EmailVerification: React.FC = () => {
 
   if (!currentUser) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
+      <LoginContainer>
+        <MainContent>
+          <LoginSection>
+            <LoginContent>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <CircularProgress size={24} sx={{ color: 'rgba(255, 255, 255, 0.5)' }} />
+              </Box>
+            </LoginContent>
+          </LoginSection>
+          <GraphicSection>
+            <OverlayText variant="h3">
+              Deploy the Hybrid Workforce of the Future
+            </OverlayText>
+            <ParticleField particleCount={particleCount} noGoZone={true} />
+          </GraphicSection>
+        </MainContent>
+      </LoginContainer>
     );
   }
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #000000 0%, #121212 100%)',
-        backgroundSize: 'cover',
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'url("/network-grid.svg") no-repeat center center',
-          backgroundSize: 'cover',
-          opacity: 0.1,
-          pointerEvents: 'none',
-          zIndex: 0
-        }
-      }}
-    >
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
-        <Box sx={{ mb: 6, textAlign: 'center' }}>
-          <Box 
-            component="img" 
-            src="/synthetic-teams-logo.svg" 
-            alt="Synthetic Teams" 
-            sx={{ height: 50, mb: 2 }}
-          />
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 700,
-              mb: 1
-            }}
-          >
-            synthetic<Box component="span" sx={{ color: theme.palette.primary.main }}>teams</Box>
-          </Typography>
-        </Box>
+    <LoginContainer>
+      <MainContent>
+        <LoginSection>
+          <LoginContent>
+            <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 400, md: 448 } }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box 
+                  component="img" 
+                  src="/logo.svg" 
+                  alt="Synthetic Teams"
+                  sx={{ 
+                    width: '180px',
+                    height: 'auto',
+                    margin: '0 auto 32px auto',
+                    display: 'block'
+                  }}
+                />
+              </Box>
+              
+              <LoginPaper>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                  <MarkEmailReadIcon sx={{ fontSize: 60, color: theme.palette.primary.main }} />
+                </Box>
+
+                <Typography component="h1">
+                  Verify Your Email
+                </Typography>
+
+                <Typography variant="body1" sx={{ mt: 2, mb: 3, textAlign: 'center' }}>
+                  We've sent a verification email to <strong>{currentUser.email}</strong>. 
+                  Please check your inbox and click the verification link to complete your registration.
+                </Typography>
+
+                {error && <ErrorAlert severity="error">{error}</ErrorAlert>}
+                {success && (
+                  <ErrorAlert severity="success" sx={{ 
+                    '& .MuiAlert-icon': { color: theme.palette.success.main },
+                    borderColor: theme.palette.success.main,
+                    backgroundColor: `${theme.palette.success.main}10`
+                  }}>
+                    {success}
+                  </ErrorAlert>
+                )}
+
+                <Typography variant="body2" sx={{ mt: 3, mb: 3, color: 'text.secondary', textAlign: 'center' }}>
+                  If you don't see the email, check your spam folder or click the button below to resend the verification email.
+                </Typography>
+
+                <AnimatedGradientButton
+                  onClick={handleResendEmail}
+                  disabled={loading || countdown > 0}
+                  loading={loading}
+                >
+                  {loading ? 'Sending...' : countdown > 0 ? `Resend Email (${countdown}s)` : 'Resend Verification Email'}
+                </AnimatedGradientButton>
+
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<LogoutIcon />}
+                  onClick={handleLogout}
+                  fullWidth
+                  sx={{ 
+                    mt: 2,
+                    height: 42,
+                    textTransform: 'none',
+                    fontSize: '0.9375rem',
+                    borderColor: 'rgba(255, 255, 255, 0.12)',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    '&:hover': {
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                    }
+                  }}
+                >
+                  Sign Out
+                </Button>
+              </LoginPaper>
+            </Box>
+          </LoginContent>
+          
+          <LoginFooter>
+            <Copyright>
+              Copyright © {new Date().getFullYear()} Synthetic Teams Inc.
+            </Copyright>
+            <LoginFooterLinks>
+              <LoginFooterLink href="/platform-agreement">
+                Platform Agreement
+              </LoginFooterLink>
+              <LoginFooterLink href="/privacy">
+                Privacy Policy
+              </LoginFooterLink>
+            </LoginFooterLinks>
+          </LoginFooter>
+        </LoginSection>
         
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4, 
-            borderRadius: 3,
-            background: alpha('#111111', 0.7),
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            textAlign: 'center'
-          }}
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <MarkEmailReadIcon sx={{ fontSize: 60, color: theme.palette.primary.main }} />
-          </Box>
-          
-          <Typography 
-            component="h2" 
-            variant="h5" 
-            align="center" 
-            sx={{ 
-              mb: 2, 
-              fontWeight: 600,
-              color: theme.palette.primary.main
-            }}
-          >
-            Verify Your Email
-          </Typography>
-          
-          <Typography variant="body1" sx={{ mb: 3 }}>
-            We've sent a verification email to <strong>{currentUser.email}</strong>. 
-            Please check your inbox and click the verification link to complete your registration.
-          </Typography>
-          
-          {error && (
-            <Alert 
-              severity="error" 
-              sx={{ 
-                mb: 3, 
-                borderRadius: 2,
-                background: alpha('#f44336', 0.1),
-                border: '1px solid rgba(244, 67, 54, 0.2)'
-              }}
-            >
-              {error}
-            </Alert>
-          )}
-          
-          {success && (
-            <Alert 
-              severity="success" 
-              sx={{ 
-                mb: 3, 
-                borderRadius: 2,
-                background: alpha('#4caf50', 0.1),
-                border: '1px solid rgba(76, 175, 80, 0.2)'
-              }}
-            >
-              {success}
-            </Alert>
-          )}
-          
-          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-            If you don't see the email, check your spam folder or click the button below to resend the verification email.
-          </Typography>
-          
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<EmailIcon />}
-            onClick={handleResendEmail}
-            disabled={loading || countdown > 0}
-            fullWidth
-            sx={{ mb: 2, py: 1.5 }}
-          >
-            {loading ? 'Sending...' : countdown > 0 ? `Resend Email (${countdown}s)` : 'Resend Verification Email'}
-          </Button>
-          
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<LogoutIcon />}
-            onClick={handleLogout}
-            fullWidth
-            sx={{ py: 1.5 }}
-          >
-            Sign Out
-          </Button>
-        </Paper>
-      </Container>
-    </Box>
+        <GraphicSection>
+          <OverlayText variant="h3">
+            Deploy the Hybrid Workforce of the Future
+          </OverlayText>
+          <ParticleField particleCount={particleCount} noGoZone={true} />
+        </GraphicSection>
+      </MainContent>
+    </LoginContainer>
   );
 };
 

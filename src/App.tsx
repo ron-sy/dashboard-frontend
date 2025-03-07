@@ -18,6 +18,7 @@ import CompanyDataSharing from './pages/CompanyDataSharing';
 import CompanyOutputLibrary from './pages/CompanyOutputLibrary';
 import CompanyOnboarding from './pages/CompanyOnboarding';
 import CompanyAIAgents from './pages/CompanyAIAgents';
+import IntercomProvider from './components/IntercomProvider';
 
 // Create a custom theme based on the synthetic teams branding
 const theme = createTheme({
@@ -101,42 +102,44 @@ const App: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterWithInvitationPage />} />
-            
-            {/* Email verification route - requires authentication but not email verification */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/verify-email" element={<EmailVerificationPage />} />
-            </Route>
-            
-            {/* Protected routes - require both authentication and email verification */}
-            <Route element={<VerifiedRoute />}>
-              <Route element={<DashboardLayout />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/account" element={<Account />} />
-                <Route path="/billing" element={<Billing />} />
-                <Route path="/referrals" element={<Referrals />} />
-                
-                {/* Company specific routes */}
-                <Route path="/companies/:companyId">
-                  <Route path="team" element={<CompanyTeam />} />
-                  <Route path="data-sharing" element={<CompanyDataSharing />} />
-                  <Route path="output-library" element={<CompanyOutputLibrary />} />
-                  <Route path="onboarding" element={<CompanyOnboarding />} />
-                  <Route path="ai-agents" element={<CompanyAIAgents />} />
+        <IntercomProvider>
+          <Router>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterWithInvitationPage />} />
+              
+              {/* Email verification route - requires authentication but not email verification */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/verify-email" element={<EmailVerificationPage />} />
+              </Route>
+              
+              {/* Protected routes - require both authentication and email verification */}
+              <Route element={<VerifiedRoute />}>
+                <Route element={<DashboardLayout />}>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/admin" element={<AdminPage />} />
+                  <Route path="/account" element={<Account />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/referrals" element={<Referrals />} />
+                  
+                  {/* Company specific routes */}
+                  <Route path="/companies/:companyId">
+                    <Route path="team" element={<CompanyTeam />} />
+                    <Route path="data-sharing" element={<CompanyDataSharing />} />
+                    <Route path="output-library" element={<CompanyOutputLibrary />} />
+                    <Route path="onboarding" element={<CompanyOnboarding />} />
+                    <Route path="ai-agents" element={<CompanyAIAgents />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
-            
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </Router>
+              
+              {/* Default redirect */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </Router>
+        </IntercomProvider>
       </AuthProvider>
     </ThemeProvider>
   );

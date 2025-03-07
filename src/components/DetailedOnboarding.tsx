@@ -11,6 +11,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LaunchIcon from '@mui/icons-material/Launch';
+import { useNavigate } from 'react-router-dom';
 
 interface OnboardingStep {
   id: string;
@@ -18,6 +19,8 @@ interface OnboardingStep {
   description: string;
   status: 'todo' | 'in_progress' | 'done' | 'skipped';
   updated_at: string;
+  todoLink?: string;
+  buttonText?: string;
   donelink?: string | null;
   clickable?: boolean;
   doneText?: string;
@@ -29,6 +32,8 @@ interface DetailedOnboardingProps {
 }
 
 const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, steps }) => {
+  const navigate = useNavigate();
+  
   // Add key change detection
   React.useEffect(() => {
     console.log('DetailedOnboarding received new phase:', selectedPhase);
@@ -47,91 +52,91 @@ const DetailedOnboarding: React.FC<DetailedOnboardingProps> = ({ selectedPhase, 
   };
 
   const getStepAction = (step: OnboardingStep) => {
-    switch (step.status) {
-      case 'done':
-        if (step.donelink) {
-          // If it's clickable, show as a button with an icon
-          if (step.clickable) {
-            return (
-              <Chip
-                label={step.doneText || "View"}
-                size="small"
-                clickable
-                onClick={() => window.open(step.donelink as string, '_blank')}
-                deleteIcon={<LaunchIcon style={{ fontSize: 14 }} />}
-                onDelete={() => window.open(step.donelink as string, '_blank')}
-                sx={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  height: '24px',
-                  fontSize: '12px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                  }
-                }}
-              />
-            );
-          }
-          // If not clickable, show as a regular chip
+    // First priority: Use todoLink and buttonText if available (new structure)
+    if (step.todoLink && step.buttonText) {
+      return (
+        <Button
+          variant="contained"
+          onClick={() => {
+            // Check if it's an external URL (starts with http:// or https://)
+            if (step.todoLink?.startsWith('http://') || step.todoLink?.startsWith('https://')) {
+              // Open external links in a new tab
+              window.open(step.todoLink, '_blank');
+            } else {
+              // Use navigate for internal routes
+              navigate(step.todoLink as string);
+            }
+          }}
+          sx={{
+            backgroundColor: alpha('#0088CC', 0.8),
+            color: 'white',
+            '&:hover': {
+              backgroundColor: alpha('#0088CC', 0.9),
+            }
+          }}
+        >
+          {step.buttonText}
+        </Button>
+      );
+    }
+    
+    // Fallback to old logic - only for completed steps with donelink or doneText
+    if (step.status === 'done') {
+      if (step.donelink) {
+        // If it's clickable, show as a button with an icon
+        if (step.clickable) {
           return (
             <Chip
-              label={step.doneText || step.donelink}
+              label={step.doneText || "View"}
               size="small"
-              sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: 'rgba(255, 255, 255, 0.7)',
-                height: '24px'
-              }}
-            />
-          );
-        }
-        // If no donelink but has doneText, show as a simple chip
-        if (step.doneText) {
-          return (
-            <Chip
-              label={step.doneText}
-              size="small"
+              clickable
+              onClick={() => window.open(step.donelink as string, '_blank')}
+              deleteIcon={<LaunchIcon style={{ fontSize: 14 }} />}
+              onDelete={() => window.open(step.donelink as string, '_blank')}
               sx={{
                 backgroundColor: 'rgba(0, 0, 0, 0.3)',
                 color: 'rgba(255, 255, 255, 0.6)',
                 height: '24px',
-                fontSize: '12px'
+                fontSize: '12px',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                }
               }}
             />
           );
         }
-        return null;
-      case 'in_progress':
+        // If not clickable, show as a regular chip
         return (
-          <Button
-            variant="contained"
+          <Chip
+            label={step.doneText || step.donelink}
+            size="small"
             sx={{
-              backgroundColor: alpha('#000000', 0.3),
-              color: 'white',
-              '&:hover': {
-                backgroundColor: alpha('#000000', 0.4),
-              }
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              color: 'rgba(255, 255, 255, 0.7)',
+              height: '24px'
             }}
-          >
-            Continue
-          </Button>
+          />
         );
-      default:
+      }
+      // If no donelink but has doneText, show as a simple chip
+      if (step.doneText) {
         return (
-          <Button
-            variant="contained"
+          <Chip
+            label={step.doneText}
+            size="small"
             sx={{
-              backgroundColor: alpha('#000000', 0.3),
-              color: 'white',
-              '&:hover': {
-                backgroundColor: alpha('#000000', 0.4),
-              }
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              color: 'rgba(255, 255, 255, 0.6)',
+              height: '24px',
+              fontSize: '12px'
             }}
-          >
-            Get started
-          </Button>
+          />
         );
+      }
     }
+    
+    // For non-functional steps, don't show any button
+    return null;
   };
 
   if (!selectedPhase || steps.length === 0) {

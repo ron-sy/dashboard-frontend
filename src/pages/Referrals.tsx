@@ -8,9 +8,24 @@ import {
   Alert,
   alpha,
   useTheme,
+  Grid,
+  Card,
+  CardContent,
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Stack,
 } from '@mui/material';
-import { GiftIcon } from '@heroicons/react/24/outline';
+import { 
+  UserGroupIcon, 
+  PhoneIcon,
+  EnvelopeIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import AnimatedGradientButton from '../components/AnimatedGradientButton';
 
 interface ReferralData {
   referral_count: number;
@@ -32,7 +47,7 @@ const Referrals: React.FC = () => {
   const fetchReferralData = async () => {
     try {
       const token = await getToken();
-      const response = await fetch('http://localhost:5001/api/account/profile', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/account/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -50,6 +65,10 @@ const Referrals: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContactRep = () => {
+    window.location.href = 'mailto:support@syntheticteams.com?subject=Referral Program Inquiry';
   };
 
   if (loading) {
@@ -76,59 +95,134 @@ const Referrals: React.FC = () => {
           <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
         )}
 
-        <Typography variant="h4" sx={{ mb: 4, color: 'white' }}>
-          Referrals
-        </Typography>
-
-        <Paper sx={{ 
-          p: 6,
-          background: alpha('#111111', 0.7),
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center'
-        }}>
-          <Box 
-            component={GiftIcon} 
-            sx={{ 
-              width: 120, 
-              height: 120, 
-              color: theme.palette.primary.main,
-              mb: 4
-            }} 
-          />
-
-          <Typography variant="h3" sx={{ 
-            color: 'white',
-            mb: 2,
-            fontWeight: 'bold'
-          }}>
-            {referralData?.referral_count || 0}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Typography variant="h4" sx={{ color: 'white' }}>
+            Referral Program
           </Typography>
+          <AnimatedGradientButton
+            onClick={handleContactRep}
+            startIcon={<Box component={PhoneIcon} sx={{ width: 20, height: 20 }} />}
+          >
+            Contact Your Rep
+          </AnimatedGradientButton>
+        </Box>
 
-          <Typography variant="h6" sx={{ 
-            color: alpha(theme.palette.primary.main, 0.8),
-            mb: 4
-          }}>
-            Total Referrals
-          </Typography>
-
-          {(!referralData?.referred_emails || referralData.referred_emails.length === 0) && (
-            <Box sx={{ 
-              mt: 4, 
-              p: 3, 
-              background: alpha(theme.palette.primary.main, 0.1),
-              borderRadius: 2,
-              maxWidth: 500
+        <Grid container spacing={3}>
+          {/* Program Details */}
+          <Grid item xs={12} md={8}>
+            <Paper sx={{ 
+              p: 4,
+              background: alpha('#111111', 0.7),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}>
-              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Share Synthetic Teams with your network and earn rewards! Each successful referral helps us grow together.
+              <Typography variant="h6" sx={{ color: 'white', mb: 3 }}>
+                Program Benefits
               </Typography>
-            </Box>
-          )}
-        </Paper>
+              <List>
+                <ListItem>
+                  <ListItemIcon>
+                    <Box component={CheckCircleIcon} sx={{ width: 24, height: 24, color: theme.palette.success.main }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Earn Rewards for Each Referral" 
+                    secondary="Get rewarded for each company that joins through your referral"
+                    sx={{ 
+                      '& .MuiListItemText-primary': { color: 'white' },
+                      '& .MuiListItemText-secondary': { color: 'text.secondary' }
+                    }}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <Box component={CheckCircleIcon} sx={{ width: 24, height: 24, color: theme.palette.success.main }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="No Referral Limit" 
+                    secondary="Refer as many companies as you want"
+                    sx={{ 
+                      '& .MuiListItemText-primary': { color: 'white' },
+                      '& .MuiListItemText-secondary': { color: 'text.secondary' }
+                    }}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <Box component={CheckCircleIcon} sx={{ width: 24, height: 24, color: theme.palette.success.main }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Quick Payouts" 
+                    secondary="Receive rewards within 30 days of successful referral"
+                    sx={{ 
+                      '& .MuiListItemText-primary': { color: 'white' },
+                      '& .MuiListItemText-secondary': { color: 'text.secondary' }
+                    }}
+                  />
+                </ListItem>
+              </List>
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Stack spacing={3}>
+              {/* Stats Card */}
+              <Paper sx={{ 
+                p: 4,
+                background: alpha('#111111', 0.7),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}>
+                <Box sx={{ 
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 2
+                }}>
+                  <Box component={UserGroupIcon} sx={{ width: 48, height: 48, color: theme.palette.primary.main }} />
+                  <Box>
+                    <Typography variant="h3" sx={{ color: 'white', mb: 1 }}>
+                      {referralData?.referral_count || 0}
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                      Total Referrals
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+
+              {/* Contact Info */}
+              <Paper sx={{ 
+                p: 4,
+                background: alpha('#111111', 0.7),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}>
+                <Typography variant="h6" sx={{ color: 'white', mb: 3 }}>
+                  Need Help?
+                </Typography>
+                <Stack spacing={2}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box component={PhoneIcon} sx={{ width: 24, height: 24, color: theme.palette.primary.main }} />
+                    <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                      +1 (888) 123-4567
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box component={EnvelopeIcon} sx={{ width: 24, height: 24, color: theme.palette.primary.main }} />
+                    <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                      support@syntheticteams.com
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
+                    Our team is available Monday through Friday, 9 AM to 6 PM EST.
+                  </Typography>
+                </Stack>
+              </Paper>
+            </Stack>
+          </Grid>
+        </Grid>
       </Container>
     </Box>
   );

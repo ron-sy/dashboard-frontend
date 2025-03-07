@@ -61,13 +61,15 @@ interface AnimatedGradientButtonProps {
   disabled?: boolean;
   loading?: boolean;
   children: React.ReactNode;
+  startIcon?: React.ReactNode;
 }
 
 const AnimatedGradientButton: React.FC<AnimatedGradientButtonProps> = ({
   onClick,
   disabled,
   loading,
-  children
+  children,
+  startIcon
 }) => {
   return (
     <ButtonContainer>
@@ -78,6 +80,7 @@ const AnimatedGradientButton: React.FC<AnimatedGradientButtonProps> = ({
         disabled={disabled || loading}
         disableElevation
         fullWidth
+        startIcon={startIcon}
       >
         {loading ? "Signing in..." : children}
       </StyledButton>

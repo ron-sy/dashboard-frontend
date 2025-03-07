@@ -24,8 +24,8 @@ export interface OnboardingStep {
   description: string;
   status: 'todo' | 'in_progress' | 'done' | 'skipped';
   updated_at: string;
-  donelink?: string | null;
-  clickable?: boolean;
+  todoLink?: string;
+  buttonText?: string;
   doneText?: string;
 }
 
@@ -84,14 +84,40 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPh
         
         const companyData: Company = await response.json();
         
-        // Debug log to check if doneText is present in the API response
         console.log('API response company data:', JSON.stringify(companyData, null, 2));
         
-        // Check for steps with doneText in the API response
-        const stepsWithDoneText = companyData.onboarding_steps.filter(step => step.doneText);
-        console.log('Steps with doneText in API response:', JSON.stringify(stepsWithDoneText, null, 2));
-        
-        setSteps(companyData.onboarding_steps);
+        // Check if onboarding_steps exists and is an array
+        if (Array.isArray(companyData.onboarding_steps)) {
+          // Sort the steps by our predefined order
+          const stepOrder = ['setup_account', 'process_payment', 'data_integration', 'refer_friend', 'ai_agents', 'training_session', 'performance_review'];
+          
+          const sortedSteps = [...companyData.onboarding_steps].sort((a, b) => {
+            // If one has status 'done' and the other doesn't, 'done' comes first
+            if (a.status === 'done' && b.status !== 'done') return -1;
+            if (a.status !== 'done' && b.status === 'done') return 1;
+            
+            // Then sort by predefined order
+            const aIndex = stepOrder.indexOf(a.id);
+            const bIndex = stepOrder.indexOf(b.id);
+            
+            // If both are in the order array, sort by index
+            if (aIndex !== -1 && bIndex !== -1) {
+              return aIndex - bIndex;
+            }
+            
+            // If only one is in the order array, it comes first
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            
+            // If neither is in the order array, sort by name
+            return a.name.localeCompare(b.name);
+          });
+          
+          setSteps(sortedSteps);
+        } else {
+          console.error('No onboarding_steps array found in company data');
+          setSteps([]);
+        }
         
         console.log(`User is${!companyData.user_is_admin ? ' not' : ''} an admin for this company`);
       } catch (err: any) {
@@ -127,62 +153,91 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ companyId, onPh
     if (allTodo) return <RadioButtonUncheckedIcon sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.3)' }} />;
   };
   
+  // First, let's add back the missing functions before the groupStepsByPhase function
+
+  const calculatePhaseStatus = (phaseSteps: OnboardingStep[]): 'todo' | 'in_progress' | 'done' | 'skipped' => {
+    const allDone = phaseSteps.every(step => step.status === 'done');
+    const anyInProgress = phaseSteps.some(step => step.status === 'in_progress');
+    const allSkipped = phaseSteps.every(step => step.status === 'skipped');
+    
+    if (allDone) return 'done';
+    if (anyInProgress) return 'in_progress';
+    if (allSkipped) return 'skipped';
+    return 'todo';
+  };
+
+  const calculateProgress = (phaseSteps: OnboardingStep[]): number => {
+    if (phaseSteps.length === 0) return 0;
+    const completedSteps = phaseSteps.filter(step => step.status === 'done').length;
+    return (completedSteps / phaseSteps.length) * 100;
+  };
+  
   // Group steps into phases
   const groupStepsByPhase = () => {
-    const totalSteps = steps.length;
-    if (totalSteps === 0) return [];
-    
-    const stepsPerPhase = Math.ceil(totalSteps / 4);
-    
-    const calculatePhaseStatus = (phaseSteps: OnboardingStep[]): 'todo' | 'in_progress' | 'done' | 'skipped' => {
-      const allDone = phaseSteps.every(step => step.status === 'done');
-      const anyInProgress = phaseSteps.some(step => step.status === 'in_progress');
-      const allSkipped = phaseSteps.every(step => step.status === 'skipped');
-      
-      if (allDone) return 'done';
-      if (anyInProgress) return 'in_progress';
-      if (allSkipped) return 'skipped';
-      return 'todo';
-    };
-
-    const calculateProgress = (phaseSteps: OnboardingStep[]): number => {
-      if (phaseSteps.length === 0) return 0;
-      const completedSteps = phaseSteps.filter(step => step.status === 'done').length;
-      return (completedSteps / phaseSteps.length) * 100;
-    };
-    
-    // Create non-overlapping slices of steps for each phase
-    const phase1Steps = steps.slice(0, stepsPerPhase);
-    const phase2Steps = steps.slice(stepsPerPhase, stepsPerPhase * 2);
-    const phase3Steps = steps.slice(stepsPerPhase * 2, stepsPerPhase * 3);
-    const phase4Steps = steps.slice(stepsPerPhase * 3);
-    
-    return [
+    // Fallback empty phases
+    const phases: OnboardingPhase[] = [
       {
         name: "Setup & Onboarding",
-        steps: phase1Steps,
-        progress: calculateProgress(phase1Steps),
-        status: calculatePhaseStatus(phase1Steps)
+        progress: 0,
+        steps: [],
+        status: 'todo'
       },
       {
         name: "Goals & Integration",
-        steps: phase2Steps,
-        progress: calculateProgress(phase2Steps),
-        status: calculatePhaseStatus(phase2Steps)
+        progress: 0,
+        steps: [],
+        status: 'todo'
       },
       {
         name: "Training & Deployment",
-        steps: phase3Steps,
-        progress: calculateProgress(phase3Steps),
-        status: calculatePhaseStatus(phase3Steps)
+        progress: 0,
+        steps: [],
+        status: 'todo'
       },
       {
         name: "Optimization & Support",
-        steps: phase4Steps,
-        progress: calculateProgress(phase4Steps),
-        status: calculatePhaseStatus(phase4Steps)
+        progress: 0,
+        steps: [],
+        status: 'todo'
       }
     ];
+    
+    // Mapping of step IDs to phase indices
+    const stepPhaseMapping: Record<string, number> = {
+      // Setup & Onboarding phase
+      'setup_account': 0,
+      'process_payment': 0,
+      
+      // Goals & Integration phase
+      'data_integration': 1,
+      'refer_friend': 1,
+      'ai_agents': 1,
+      
+      // Training & Deployment phase
+      'training_session': 2,
+      
+      // Optimization & Support phase
+      'performance_review': 3
+    };
+    
+    // Group steps into phases based on mapping
+    steps.forEach(step => {
+      const phaseIndex = stepPhaseMapping[step.id];
+      if (phaseIndex !== undefined) {
+        phases[phaseIndex].steps.push(step);
+      } else {
+        // Default to first phase if not found in mapping
+        phases[0].steps.push(step);
+      }
+    });
+    
+    // Calculate status and progress for each phase
+    phases.forEach(phase => {
+      phase.status = calculatePhaseStatus(phase.steps);
+      phase.progress = calculateProgress(phase.steps);
+    });
+    
+    return phases;
   };
   
   const phases = groupStepsByPhase();
