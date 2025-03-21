@@ -30,7 +30,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 interface AIAgent {
   name: string;
   purpose: string;
-  status: 'deployed' | 'training' | 'deactivated';
+  status: 'deployed' | 'training' | 'deactivated' | 'ready';
   output: string;
   input: string;
   training_time: number;
@@ -195,6 +195,15 @@ const CompanyAIAgents: React.FC = () => {
           backgroundColor: alpha('#ffffff', 0.1),
           color: theme.palette.text.primary,
         };
+      case 'ready':
+        return {
+          ...baseStyle,
+          backgroundColor: alpha('#4caf50', 0.2),
+          color: '#4caf50',
+          '&:hover': {
+            backgroundColor: alpha('#4caf50', 0.3),
+          }
+        };
       case 'training':
         return {
           ...baseStyle,
@@ -293,7 +302,7 @@ const CompanyAIAgents: React.FC = () => {
     <Box>
       <Card
         sx={{
-          height: agent.status === 'training' ? 400 : 320,
+          height: agent.status === 'training' || agent.status === 'ready' ? 400 : 320,
           background: alpha('#111111', 0.7),
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.05)',
@@ -325,7 +334,7 @@ const CompanyAIAgents: React.FC = () => {
               {agent.purpose}
             </Typography>
 
-            {agent.status === 'training' && (
+            {(agent.status === 'training' || agent.status === 'ready') && (
               <Box sx={{ my: 1 }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <Typography variant="caption" color="text.secondary">
@@ -373,7 +382,7 @@ const CompanyAIAgents: React.FC = () => {
           </Stack>
         </CardContent>
       </Card>
-      {agent.status === 'training' && (
+      {(agent.status === 'training' || agent.status === 'ready') && (
         <Stack 
           direction="row" 
           spacing={1} 

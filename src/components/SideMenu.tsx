@@ -14,7 +14,8 @@ import {
   RectangleStackIcon,
   BellIcon,
   ChartBarIcon,
-  SparklesIcon
+  SparklesIcon,
+  ComputerDesktopIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,6 +30,7 @@ interface Company {
   id: string;
   name: string;
   created_at: string;
+  platform_access?: boolean;
 }
 
 const SideMenu: React.FC<SideMenuProps> = ({ 
@@ -602,6 +604,43 @@ const SideMenu: React.FC<SideMenuProps> = ({
                   }}
                 />
               </ListItemButton>
+
+              {/* Platform menu item - only visible if company has platform_access */}
+              {currentCompany?.platform_access && (
+                <ListItemButton
+                  onClick={() => navigateToCompanyPage('platform')}
+                  sx={{
+                    borderRadius: '6px',
+                    py: 1,
+                    px: 1.5,
+                    mb: 0.5,
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    },
+                  }}
+                >
+                  <Box 
+                    component={ComputerDesktopIcon}
+                    sx={{ 
+                      width: 18,
+                      height: 18,
+                      color: 'text.secondary',
+                      mr: 1.5,
+                      opacity: 0.7,
+                    }}
+                  />
+                  <ListItemText 
+                    primary="Platform"
+                    sx={{
+                      m: 0,
+                      '& .MuiListItemText-primary': {
+                        fontSize: 14,
+                        fontWeight: 500,
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              )}
             </List>
           )}
         </Box>

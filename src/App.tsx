@@ -18,6 +18,7 @@ import CompanyDataSharing from './pages/CompanyDataSharing';
 import CompanyOutputLibrary from './pages/CompanyOutputLibrary';
 import CompanyOnboarding from './pages/CompanyOnboarding';
 import CompanyAIAgents from './pages/CompanyAIAgents';
+import CompanyPlatformMock from './pages/CompanyPlatformMock';
 import IntercomProvider from './components/IntercomProvider';
 
 // Create a custom theme based on the synthetic teams branding
@@ -130,6 +131,7 @@ const App: React.FC = () => {
                     <Route path="output-library" element={<CompanyOutputLibrary />} />
                     <Route path="onboarding" element={<CompanyOnboarding />} />
                     <Route path="ai-agents" element={<CompanyAIAgents />} />
+                    <Route path="platform" element={<CompanyPlatformMock />} />
                   </Route>
                 </Route>
               </Route>
