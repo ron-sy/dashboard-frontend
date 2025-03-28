@@ -294,7 +294,7 @@ const CompanyPlatformMock: React.FC = () => {
           size="large"
           fullWidth
           endIcon={<OpenInNewIcon />}
-          onClick={() => window.open('https://st-platform.vercel.app/maven', '_blank')}
+          onClick={() => window.open('https://st-platform.vercel.app/he/maven', '_blank')}
           sx={{
             py: 1.5,
             background: 'linear-gradient(90deg, #0088FF 0%, #00A3FF 100%)',
