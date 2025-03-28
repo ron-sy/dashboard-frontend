@@ -281,23 +281,20 @@ const CompanyPlatformMock: React.FC = () => {
           my: 4
         }}
       >
-        <LockIcon sx={{ fontSize: 64, color: alpha('#ffffff', 0.2), mb: 2 }} />
-        
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, mb: 1 }}>
-          Platform Access Locked
+          Platform Ready
         </Typography>
         
         <Typography variant="body1" sx={{ mb: 4, color: 'rgba(255, 255, 255, 0.7)' }}>
-          Schedule a meeting with our team to get a personalized walkthrough and unlock full access to the AI-powered platform.
+          Your AI-powered platform is ready. Meet your AI agents and start exploring the future of team collaboration.
         </Typography>
         
         <Button
           variant="contained"
           size="large"
           fullWidth
-          startIcon={<CalendarTodayIcon />}
           endIcon={<OpenInNewIcon />}
-          onClick={() => window.open('https://calendly.com/ron-syntheticteams', '_blank')}
+          onClick={() => window.open('https://st-platform.vercel.app/maven', '_blank')}
           sx={{
             py: 1.5,
             background: 'linear-gradient(90deg, #0088FF 0%, #00A3FF 100%)',
@@ -307,7 +304,7 @@ const CompanyPlatformMock: React.FC = () => {
             boxShadow: '0 4px 12px rgba(0, 128, 255, 0.3)'
           }}
         >
-          Schedule Platform Demo
+          Open Platform
         </Button>
       </Paper>
     </Box>
