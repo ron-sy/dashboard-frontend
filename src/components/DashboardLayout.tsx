@@ -144,9 +144,9 @@ const DashboardLayout: React.FC = () => {
             >
               <Box 
                 component="img" 
-                src="/logo.svg" 
+                src="/st-newlogo.png" 
                 alt="Logo" 
-                sx={{ height: 48 }}
+                sx={{ height: 60 }}
               />
             </Typography>
           </Box>

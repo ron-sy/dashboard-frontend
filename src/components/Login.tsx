@@ -151,10 +151,10 @@ const Login: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Box 
                   component="img" 
-                  src="/logo.svg" 
+                  src="/st-newlogo.png" 
                   alt="Synthetic Teams"
                   sx={{ 
-                    width: '180px',
+                    width: '220px',
                     height: 'auto',
                     margin: '0 auto 32px auto',
                     display: 'block'
