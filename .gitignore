@@ -25,3 +25,4 @@ yarn-error.log*
 # environment variables
 .env
 firebase-service-account-key.json
+firebase-service-account-key.json
