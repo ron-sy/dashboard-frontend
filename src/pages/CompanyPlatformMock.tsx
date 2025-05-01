@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -10,7 +10,8 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +25,8 @@ import ParticleField from '../components/ParticleField';
 const CompanyPlatformMock: React.FC = () => {
   const theme = useTheme();
   const { companyId } = useParams();
-  const { getToken } = useAuth();
+  const { getToken, currentUser } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   // Mock chat history data
   const mockChats = [
@@ -44,6 +46,28 @@ const CompanyPlatformMock: React.FC = () => {
       rgba(76, 99, 242, 0.2) 60%,
       rgba(6, 63, 159, 0.2) 90%)
   `;
+
+  // Function to handle platform opening with Firebase token
+  const openPlatform = async () => {
+    try {
+      setLoading(true);
+      // Get the Firebase ID token
+      const token = await getToken();
+      
+      if (token) {
+        // Open platform with token in URL
+        window.open(`https://st-platform.vercel.app/api/auth/firebase-bridge?token=${token}`, '_blank');
+      } else {
+        console.error("Could not get authentication token");
+        alert("Authentication error. Please try again or contact support.");
+      }
+    } catch (error) {
+      console.error("Error opening platform:", error);
+      alert("Error opening platform. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box 
@@ -293,8 +317,9 @@ const CompanyPlatformMock: React.FC = () => {
           variant="contained"
           size="large"
           fullWidth
-          endIcon={<OpenInNewIcon />}
-          onClick={() => window.open('https://st-platform.vercel.app/he/maven', '_blank')}
+          endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <OpenInNewIcon />}
+          onClick={openPlatform}
+          disabled={loading}
           sx={{
             py: 1.5,
             background: 'linear-gradient(90deg, #0088FF 0%, #00A3FF 100%)',
@@ -304,7 +329,7 @@ const CompanyPlatformMock: React.FC = () => {
             boxShadow: '0 4px 12px rgba(0, 128, 255, 0.3)'
           }}
         >
-          Open Platform
+          {loading ? 'Opening...' : 'Open Platform'}
         </Button>
       </Paper>
     </Box>
